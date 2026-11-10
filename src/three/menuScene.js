@@ -1,6 +1,7 @@
-// Scène 3D du menu de départ : une falaise de basalte coiffée d'un phare
-// dont le faisceau balaie la baie, un village éclairé à ses pieds, la lune,
-// la brume et une barque qui passe. Caméra en perspective, légèrement mobile.
+// Scène 3D du menu de départ : une île de basalte coiffée d'un phare dont le
+// faisceau balaie l'horizon, une chapelle et un village éclairés, la lune,
+// des nappes de brume et une barque qui passe. Caméra en perspective,
+// cadrée pour que l'île reste à droite et laisse la place au menu.
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -14,8 +15,10 @@ import { createWater } from './water.js';
 const SIZE = 40;
 const AMBER = '#E8A33D';
 const LIGHT = '#F5C26B';
+const HORIZON = '#0b191b';
+const ZENITH = '#020507';
 
-// Relief de l'île principale : hauteur (en blocs empilés) de chaque case.
+// Relief de l'île : hauteur (en blocs empilés) de chaque case.
 const ISLAND = [
   '...1121...',
   '..123321..',
@@ -26,6 +29,115 @@ const ISLAND = [
   '...111....',
 ];
 const ORIGIN = { x: 11, z: 4 };
+const BASE_CAMERA = new THREE.Vector3(1.5, 3.4, 24);
+
+// ---------- Ciel ----------
+
+function skyDome() {
+  const material = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    uniforms: { uHorizon: { value: new THREE.Color(HORIZON) }, uZenith: { value: new THREE.Color(ZENITH) } },
+    vertexShader: 'varying vec3 vDir; void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform vec3 uHorizon; uniform vec3 uZenith; varying vec3 vDir;
+      void main() { float k = smoothstep(-0.02, 0.45, vDir.y); gl_FragColor = vec4(mix(uHorizon, uZenith, k), 1.0);
+      #include <colorspace_fragment>
+      }`,
+  });
+  return new THREE.Mesh(new THREE.SphereGeometry(180, 32, 16), material);
+}
+
+// La lune : disque peint (cratères, assombrissement du bord) et halo doux.
+function moonSprites() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  const g = c.getContext('2d');
+  const disc = g.createRadialGradient(230, 220, 20, 256, 256, 200);
+  disc.addColorStop(0, '#fbfcf8');
+  disc.addColorStop(0.7, '#dfe7e3');
+  disc.addColorStop(1, '#b9c7c3');
+  g.fillStyle = disc;
+  g.beginPath();
+  g.arc(256, 256, 200, 0, Math.PI * 2);
+  g.fill();
+  g.save();
+  g.clip();
+  // Mers lunaires et cratères.
+  for (const [x, y, r, a] of [[200, 190, 70, 0.16], [300, 280, 90, 0.13], [210, 320, 50, 0.12], [330, 170, 40, 0.1], [150, 270, 30, 0.1]]) {
+    g.fillStyle = `rgba(110, 130, 128, ${a})`;
+    g.beginPath();
+    g.ellipse(x, y, r, r * 0.8, 0.4, 0, Math.PI * 2);
+    g.fill();
+  }
+  for (let i = 0; i < 26; i++) {
+    const x = 90 + Math.random() * 330;
+    const y = 90 + Math.random() * 330;
+    const r = 4 + Math.random() * 14;
+    g.strokeStyle = 'rgba(90, 110, 108, 0.25)';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.stroke();
+    g.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    g.beginPath();
+    g.arc(x - r * 0.25, y - r * 0.25, r * 0.6, 0, Math.PI * 2);
+    g.fill();
+  }
+  const limb = g.createRadialGradient(256, 256, 120, 256, 256, 205);
+  limb.addColorStop(0, 'rgba(20, 40, 45, 0)');
+  limb.addColorStop(1, 'rgba(20, 40, 45, 0.45)');
+  g.fillStyle = limb;
+  g.fillRect(0, 0, 512, 512);
+  g.restore();
+  // Couleur légèrement voilée : la lune reste lisible sous le halo lumineux.
+  const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), color: '#a9b8b4', fog: false, depthWrite: false, toneMapped: false }));
+  moon.material.map.colorSpace = THREE.SRGBColorSpace;
+
+  const h = document.createElement('canvas');
+  h.width = h.height = 256;
+  const hg = h.getContext('2d');
+  const glow = hg.createRadialGradient(128, 128, 20, 128, 128, 128);
+  glow.addColorStop(0, 'rgba(190, 215, 212, 0.35)');
+  glow.addColorStop(0.3, 'rgba(150, 185, 182, 0.08)');
+  glow.addColorStop(1, 'rgba(150, 185, 182, 0)');
+  hg.fillStyle = glow;
+  hg.fillRect(0, 0, 256, 256);
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: new THREE.CanvasTexture(h), fog: false, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending,
+  }));
+  return { moon, halo };
+}
+
+// ---------- Brume ----------
+// Des nappes horizontales dont la densité suit un bruit animé : la brume
+// roule au ras de l'eau au lieu de flotter en boules.
+function mistLayer(y, opacity, seed) {
+  const material = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color('#7f9893') }, uOpacity: { value: opacity }, uSeed: { value: seed } },
+    vertexShader: `varying vec2 vXZ; varying float vDepth;
+      void main() { vec4 w = modelMatrix * vec4(position, 1.0); vXZ = w.xz; vec4 v = viewMatrix * w; vDepth = -v.z; gl_Position = projectionMatrix * v; }`,
+    fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOpacity; uniform float uSeed;
+      varying vec2 vXZ; varying float vDepth;
+      float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float noise(vec2 p) { vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y); }
+      float fbm(vec2 p) { float v = 0.0; float a = 0.5; for (int i = 0; i < 5; i++) { v += a * noise(p); p *= 2.03; a *= 0.5; } return v; }
+      void main() {
+        vec2 p = vXZ * vec2(0.09, 0.16) + vec2(uTime * 0.025, uTime * 0.008) + uSeed;
+        float n = fbm(p + fbm(p * 0.7 - uTime * 0.01));
+        float a = smoothstep(0.42, 0.78, n) * uOpacity;
+        a *= smoothstep(5.0, 14.0, vDepth) * (1.0 - smoothstep(70.0, 110.0, vDepth));
+        gl_FragColor = vec4(uColor, a);
+        #include <colorspace_fragment>
+      }`,
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(220, 220).rotateX(-Math.PI / 2), material);
+  mesh.position.set(14, y, 0);
+  mesh.renderOrder = 3;
+  return mesh;
+}
 
 export function createMenuScene(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -36,39 +148,35 @@ export function createMenuScene(canvas) {
   renderer.toneMappingExposure = 1.2;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#050a0b');
-  scene.fog = new THREE.Fog('#050b0c', 30, 80);
+  scene.fog = new THREE.Fog(HORIZON, 34, 95);
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 400);
+  scene.add(skyDome());
 
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
-  // On regarde à gauche de l'île : elle se place à droite, le menu à gauche.
-  const lookAt = new THREE.Vector3(10.5, 2.4, 10.5);
-
-  // Ciel : lune, halo et étoiles.
-  scene.add(new THREE.HemisphereLight('#557a82', '#05090a', 0.95));
-  const moon = new THREE.DirectionalLight('#b4d2d8', 2.4);
-  moon.position.set(0, 14, 26);
-  moon.target.position.copy(lookAt);
-  moon.castShadow = true;
-  moon.shadow.mapSize.set(2048, 2048);
-  Object.assign(moon.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 });
-  moon.shadow.bias = -0.0008;
-  scene.add(moon, moon.target);
-  const moonDisc = new THREE.Mesh(new THREE.CircleGeometry(1.5, 40), new THREE.MeshBasicMaterial({ color: '#e4eeea', fog: false }));
-  moonDisc.position.set(44, 13, -8);
-  moonDisc.lookAt(0, 4, 20);
-  scene.add(moonDisc);
-  const halo = M.mist(14, 0.28);
-  halo.material.color.set('#9FB6B1');
-  halo.position.copy(moonDisc.position);
-  halo.scale.set(12, 12, 1);
-  scene.add(halo);
+  // Étoiles, plus nombreuses vers le zénith.
+  const starPos = [];
+  for (let i = 0; i < 700; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const up = 0.06 + Math.pow(Math.random(), 0.7) * 0.9;
+    starPos.push(Math.cos(a) * Math.cos(up) * 170, Math.sin(up) * 170, Math.sin(a) * Math.cos(up) * 170);
+  }
   const starGeo = new THREE.BufferGeometry();
-  const stars = [];
-  for (let i = 0; i < 260; i++) stars.push((Math.random() - 0.3) * 120, 8 + Math.random() * 40, -40 - Math.random() * 30);
-  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(stars, 3));
-  scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: '#CFE3DC', size: 0.12, fog: false, transparent: true, opacity: 0.7 })));
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+  const starField = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: '#CFE3DC', size: 0.55, fog: false, transparent: true, opacity: 0.75, sizeAttenuation: true }));
+  scene.add(starField);
+  const { moon: moonDisc, halo } = moonSprites();
+  scene.add(halo, moonDisc);
 
-  // Mer : l'eau stylisée près des côtes, une nappe sombre jusqu'à l'horizon.
+  scene.add(new THREE.HemisphereLight('#557a82', '#05090a', 0.95));
+  const moonLight = new THREE.DirectionalLight('#b4d2d8', 2.4);
+  moonLight.position.set(0, 14, 26);
+  moonLight.target.position.set(15, 2, 8);
+  moonLight.castShadow = true;
+  moonLight.shadow.mapSize.set(2048, 2048);
+  Object.assign(moonLight.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 });
+  moonLight.shadow.bias = -0.0008;
+  scene.add(moonLight, moonLight.target);
+
+  // Relief de l'île.
   const heights = new Map();
   ISLAND.forEach((row, j) => [...row].forEach((ch, i) => {
     if (ch !== '.') heights.set(`${ORIGIN.x + i},${ORIGIN.z + j}`, Number(ch));
@@ -76,24 +184,34 @@ export function createMenuScene(canvas) {
   heights.set('5,5', 1);
   heights.set('6,5', 1);
   heights.set('5,6', 1);
-  const sea = createWater(SIZE);
+
+  // La même mer stylisée partout, qui se fond dans la nuit vers l'horizon.
+  const sea = createWater(SIZE, { planeSize: 600, fade: { color: HORIZON, near: 30, far: 110 } });
   sea.userData.recolor((x, y) => {
     if (heights.has(`${x},${y}`)) return 'land';
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (heights.has(`${x + dx},${y + dz}`)) return 'shallow';
     return 'deep';
   });
   scene.add(sea);
-  const horizon = new THREE.Mesh(new THREE.PlaneGeometry(400, 400).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#040a0b', fog: false }));
-  horizon.position.set(12, M.WATER_LEVEL - 0.02, 0);
-  scene.add(horizon);
 
-  // Falaise : des blocs de basalte empilés, plus hauts au centre.
+  // Falaise : des blocs de basalte empilés qui se rétrécissent en montant.
   const BLOCK = M.LAND_TOP + 0.5;
-  let seed = 11;
-  let summit = { x: 0, z: 0, h: 0 };
+  const topOf = (x, z) => (heights.get(`${x},${z}`) - 1) * BLOCK + M.LAND_TOP;
+  let summit = { h: 0 };
   for (const [key, h] of heights) {
     const [x, z] = key.split(',').map(Number);
-    // Chaque étage se rétrécit et se décale un peu : la falaise s'effrite.
+    const centre = Math.abs(x - 15) + Math.abs(z - 7);
+    if (h > summit.h || (h === summit.h && centre < summit.centre)) summit = { x, z, h, centre };
+  }
+  // Emplacements réservés aux bâtiments.
+  const chapelAt = { x: 14, z: 5 };
+  const keeperAt = [[1, 0], [0, 1], [-1, 0], [0, -1]].map(([dx, dz]) => ({ x: summit.x + dx, z: summit.z + dz }))
+    .find((p) => heights.get(`${p.x},${p.z}`) === summit.h);
+  const reserved = new Set([`${chapelAt.x},${chapelAt.z}`, `${summit.x},${summit.z}`, keeperAt && `${keeperAt.x},${keeperAt.z}`]);
+
+  let seed = 11;
+  for (const [key, h] of heights) {
+    const [x, z] = key.split(',').map(Number);
     for (let k = 0; k < h; k++) {
       const block = M.landBlock(seed++);
       const shrink = 1.06 - k * 0.07;
@@ -102,48 +220,85 @@ export function createMenuScene(canvas) {
       block.rotation.y = Math.sin(seed * 3.1) * 0.06;
       scene.add(block);
     }
+    if (reserved.has(key)) continue;
     const top = (h - 1) * BLOCK;
-    const centre = Math.abs(x - 15) + Math.abs(z - 7);
-    if (h > summit.h || (h === summit.h && centre < summit.centre)) summit = { x, z, h, top, centre };
     if (h >= 2 && h < 4 && seed % 2 === 0) {
       const f = M.falaise(seed);
       f.position.set(x, top, z);
       scene.add(f);
-    }
-    if (h === 1 && seed % 3 === 1) {
+    } else if (h === 1 && seed % 3 === 1) {
       const m = M.mangrove(seed);
       m.position.set(x, top, z);
       scene.add(m);
+    } else if (seed % 5 === 0) {
+      const prop = B.landProp(seed);
+      if (prop) {
+        prop.position.set(x, top, z);
+        scene.add(prop);
+      }
     }
   }
+
+  // Phare au sommet, chapelle sur la pente, maison du gardien à côté du phare.
+  const lighthouse = M.tower(LIGHT);
+  lighthouse.scale.setScalar(2.4);
+  lighthouse.position.set(summit.x, topOf(summit.x, summit.z), summit.z);
+  scene.add(lighthouse);
+  const chapel = B.chapel(LIGHT, 5);
+  chapel.scale.setScalar(1.6);
+  chapel.rotation.y = Math.PI * 0.75;
+  chapel.position.set(chapelAt.x, topOf(chapelAt.x, chapelAt.z), chapelAt.z);
+  scene.add(chapel);
+  if (keeperAt) {
+    const keeper = B.tallHouse(AMBER, 9);
+    keeper.scale.setScalar(1.7);
+    keeper.position.set(keeperAt.x, topOf(keeperAt.x, keeperAt.z), keeperAt.z);
+    scene.add(keeper);
+    const lamp = B.lampPost(LIGHT);
+    lamp.scale.setScalar(1.6);
+    lamp.position.set((keeperAt.x + summit.x) / 2 + 0.3, topOf(keeperAt.x, keeperAt.z), (keeperAt.z + summit.z) / 2 + 0.3);
+    scene.add(lamp);
+  }
+  const chapelLight = new THREE.PointLight(LIGHT, 2.5, 4, 1.8);
+  chapelLight.position.set(chapelAt.x, topOf(chapelAt.x, chapelAt.z) + 0.5, chapelAt.z + 0.6);
+  scene.add(chapelLight);
+
   scene.traverse((o) => {
-    if (o.isMesh) {
+    if (o.isMesh && !o.material.transparent) {
       o.castShadow = true;
       o.receiveShadow = true;
     }
   });
 
-  // Phare au sommet.
-  const lighthouse = M.tower(LIGHT);
-  lighthouse.scale.setScalar(2.4);
-  lighthouse.position.set(summit.x, summit.top + M.LAND_TOP, summit.z);
-  scene.add(lighthouse);
-  const lampY = summit.top + M.LAND_TOP + 0.77 * 2.4;
-  const beamGeo = new THREE.ConeGeometry(4, 34, 32, 1, true);
-  beamGeo.translate(0, -17, 0);
+  // Faisceau du phare : il balaie l'horizon, jamais vers le spectateur.
+  const lampY = topOf(summit.x, summit.z) + 0.77 * 2.4;
+  const beamGeo = new THREE.ConeGeometry(4.5, 40, 32, 1, true);
+  beamGeo.translate(0, -20, 0);
   beamGeo.rotateZ(Math.PI / 2);
-  const beamMat = new THREE.MeshBasicMaterial({
-    color: LIGHT, transparent: true, opacity: 0.09, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false,
+  // Le faisceau s'estompe vers son extrémité et sur ses bords : vu de
+  // face ou de dos, il ne forme pas de disque, seulement une lueur.
+  const beamMat = (opacity) => new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    uniforms: { uColor: { value: new THREE.Color(LIGHT) }, uOpacity: { value: opacity } },
+    vertexShader: `varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      void main() { vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform vec3 uColor; uniform float uOpacity; varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      void main() { float a = pow(vUv.y, 0.9) * uOpacity * pow(abs(dot(vN, vV)), 1.1); gl_FragColor = vec4(uColor * a, a);
+      #include <colorspace_fragment>
+      }`,
   });
-  const beam = new THREE.Mesh(beamGeo, beamMat);
+  const beam = new THREE.Mesh(beamGeo, beamMat(0.45));
   beam.position.set(summit.x, lampY, summit.z);
   scene.add(beam);
-  const beamCore = new THREE.Mesh(beamGeo, beamMat.clone());
-  beamCore.material.opacity = 0.12;
-  beamCore.scale.set(1, 0.4, 0.4);
+  const beamCore = new THREE.Mesh(beamGeo, beamMat(0.5));
+  beamCore.scale.set(1, 0.35, 0.35);
   beam.add(beamCore);
+  const away = Math.atan2(-(summit.z - BASE_CAMERA.z), summit.x - BASE_CAMERA.x);
 
-  // Village éclairé au pied de la falaise.
+  // Village au pied de la falaise et hameau sur l'îlot.
   const village = B.city({ level: 4, color: AMBER, light: LIGHT, seed: 3 });
   village.position.set(ORIGIN.x + 2, 0, ORIGIN.z + 6);
   scene.add(village);
@@ -161,22 +316,27 @@ export function createMenuScene(canvas) {
   boat.scale.setScalar(1.6);
   scene.add(boat);
 
-  // Nappes de brume.
-  const mists = [];
-  for (let i = 0; i < 9; i++) {
-    const m = M.mist(10 + Math.random() * 8, 0.12);
-    m.position.set(2 + i * 3.4, 0.6 + Math.random() * 0.6, 4 + Math.random() * 12);
-    m.userData.base = m.position.clone();
-    m.userData.s = Math.random() * 10;
-    scene.add(m);
-    mists.push(m);
-  }
+  const mists = [mistLayer(0.35, 0.42, 0), mistLayer(1.2, 0.22, 7.3)];
+  scene.add(...mists);
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.8, 0.55, 0.8);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.75, 0.55, 0.82);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
+
+  // Cadrage : on vise à gauche de l'île pour qu'elle se place dans le tiers
+  // droit de l'écran ; sur un écran étroit, on la recentre et on recule.
+  const centre = new THREE.Vector3(15, 2.6, 7.5);
+  const view = { target: new THREE.Vector3(), back: 0, shift: 0 };
+  function frameView(camPos) {
+    const toCentre = centre.clone().sub(camPos).normalize();
+    const right = new THREE.Vector3().crossVectors(toCentre, camera.up).normalize();
+    const dist = centre.distanceTo(camPos);
+    const halfW = dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+    view.target.copy(centre).addScaledVector(right, -halfW * view.shift);
+    return { right };
+  }
 
   function resize() {
     const w = canvas.clientWidth;
@@ -184,9 +344,22 @@ export function createMenuScene(canvas) {
     renderer.setSize(w, h, false);
     composer.setSize(w, h);
     camera.aspect = w / h;
-    // Sur un écran étroit, on recule pour garder le phare dans le cadre.
-    camera.userData.back = w / h < 1.2 ? 8 : 0;
     camera.updateProjectionMatrix();
+    view.back = camera.aspect < 1.2 ? 10 : 0;
+    view.shift = camera.aspect < 1.2 ? 0 : 0.38;
+    // La lune se place en haut à droite du cadre.
+    const camPos = BASE_CAMERA.clone().add(new THREE.Vector3(0, view.back * 0.2, view.back));
+    const { right } = frameView(camPos);
+    const d = 150;
+    const halfW = d * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+    const halfH = d * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const lookDir = view.target.clone().sub(camPos).normalize();
+    const up = new THREE.Vector3().crossVectors(right, lookDir).normalize();
+    const pos = camPos.clone().addScaledVector(lookDir, d).addScaledVector(right, halfW * 0.62).addScaledVector(up, halfH * 0.58);
+    moonDisc.position.copy(pos);
+    halo.position.copy(pos);
+    moonDisc.scale.setScalar(16);
+    halo.scale.setScalar(48);
   }
   window.addEventListener('resize', resize);
   resize();
@@ -196,23 +369,22 @@ export function createMenuScene(canvas) {
   function frame() {
     if (!running) return;
     const t = clock.getElapsedTime();
-    const back = camera.userData.back;
-    camera.position.set(1.5 + Math.sin(t * 0.05) * 1.2 - back * 0.4, 3.4 + Math.sin(t * 0.07) * 0.25 + back * 0.2, 24 + back + Math.cos(t * 0.04) * 0.8);
-    camera.lookAt(lookAt);
+    camera.position.set(
+      BASE_CAMERA.x + Math.sin(t * 0.05) * 1.2,
+      BASE_CAMERA.y + Math.sin(t * 0.07) * 0.25 + view.back * 0.2,
+      BASE_CAMERA.z + view.back + Math.cos(t * 0.04) * 0.8,
+    );
+    frameView(camera.position);
+    camera.lookAt(view.target);
     sea.userData.update(t);
-    beam.rotation.y = t * 0.45;
-    const k = 0.5 + 0.5 * Math.cos(beam.rotation.y - 2.6); // plus vif quand il vient vers nous
-    beam.material.opacity = 0.05 + k * 0.1;
-    beamCore.material.opacity = 0.06 + k * 0.14;
+    beam.rotation.y = away + Math.sin(t * 0.28) * 1.35;
     const p = (t * 0.018) % 1;
     boat.position.set(-2 + p * 26, M.WATER_LEVEL - 0.02 + Math.sin(t * 1.3) * 0.03, 17.5 - Math.sin(p * Math.PI) * 2);
     boat.rotation.y = 0.12 * Math.sin(p * Math.PI * 2);
     boat.rotation.z = Math.sin(t * 1.1) * 0.05;
     U.animateParts(boat, t);
-    for (const m of mists) {
-      m.position.x = m.userData.base.x + Math.sin(t * 0.08 + m.userData.s) * 1.5;
-      m.position.z = m.userData.base.z + Math.cos(t * 0.06 + m.userData.s) * 0.8;
-    }
+    for (const m of mists) m.material.uniforms.uTime.value = t;
+    starField.material.opacity = 0.65 + Math.sin(t * 0.7) * 0.08;
     composer.render();
     requestAnimationFrame(frame);
   }
@@ -222,10 +394,7 @@ export function createMenuScene(canvas) {
     dispose() {
       running = false;
       window.removeEventListener('resize', resize);
-      scene.traverse((o) => {
-        o.geometry?.dispose();
-      });
-      composer.dispose?.();
+      scene.traverse((o) => o.geometry?.dispose());
       renderer.dispose();
     },
   };

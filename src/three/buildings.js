@@ -7,7 +7,7 @@ import { C, LAND_TOP, mat, glowMat, jitter, mesh, tube, gableRoof, house, tower,
 
 // ---------- Bâtiments ----------
 
-function tallHouse(light, seed) {
+export function tallHouse(light, seed) {
   const r = rng(seed);
   const g = new THREE.Group();
   const w = 0.17;
@@ -27,7 +27,7 @@ function tallHouse(light, seed) {
   return g;
 }
 
-function chapel(light, seed) {
+export function chapel(light, seed) {
   const g = new THREE.Group();
   const w = 0.2;
   const d = 0.34;
@@ -107,7 +107,7 @@ function well(seed) {
   return g;
 }
 
-function lampPost(light) {
+export function lampPost(light) {
   const g = new THREE.Group();
   g.add(mesh(new THREE.CylinderGeometry(0.008, 0.012, 0.26, 5), mat(C.iron), 0, 0.13, 0));
   g.add(mesh(new THREE.BoxGeometry(0.035, 0.045, 0.035), glowMat(light, 3.5), 0, 0.28, 0));

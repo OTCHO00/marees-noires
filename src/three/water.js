@@ -11,10 +11,13 @@ const FAR = 1.5; // distance à la côte encodée dans le champ (en cases)
 
 const vertexShader = /* glsl */ `
 varying vec2 vXZ;
+varying float vDepth;
 void main() {
   vec4 world = modelMatrix * vec4(position, 1.0);
   vXZ = world.xz;
-  gl_Position = projectionMatrix * viewMatrix * world;
+  vec4 view = viewMatrix * world;
+  vDepth = -view.z;
+  gl_Position = projectionMatrix * view;
 }
 `;
 
@@ -29,7 +32,10 @@ uniform vec3 uFoam;
 uniform vec3 uRipple;
 uniform vec3 uLightPos[${MAX_LIGHTS}];
 uniform vec3 uLightCol[${MAX_LIGHTS}];
+uniform vec3 uFade;
+uniform vec2 uFadeRange;
 varying vec2 vXZ;
+varying float vDepth;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -86,13 +92,17 @@ void main() {
 
   col = mix(col, uRipple, ripple * 0.7);
   col = mix(col, uFoam, max(hug, max(line1 * 0.75, line2)));
+  // Au loin, la mer se fond dans la nuit (utile en vue perspective).
+  col = mix(col, uFade, smoothstep(uFadeRange.x, uFadeRange.y, vDepth));
   gl_FragColor = vec4(col, 1.0);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }
 `;
 
-export function createWater(size) {
+// `planeSize` étend la mer au-delà du champ côtier (jusqu'à l'horizon) ;
+// `fade` la fait disparaître dans la nuit entre deux distances.
+export function createWater(size, { planeSize, fade = null } = {}) {
   const width = size + 12;
   const center = (size - 1) / 2;
   const x0 = center - width / 2;
@@ -114,11 +124,13 @@ export function createWater(size) {
     uRipple: { value: new THREE.Color('#284744') },
     uLightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector3()) },
     uLightCol: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Color(0, 0, 0)) },
+    uFade: { value: new THREE.Color(fade?.color ?? '#000000') },
+    uFadeRange: { value: new THREE.Vector2(fade?.near ?? 1e5, fade?.far ?? 2e5) },
   };
   // Couleurs exactes de la palette : pas de compression des tons.
   const material = new THREE.ShaderMaterial({ uniforms, vertexShader, fragmentShader, toneMapped: false });
 
-  const sea = new THREE.Mesh(new THREE.PlaneGeometry(width, width).rotateX(-Math.PI / 2), material);
+  const sea = new THREE.Mesh(new THREE.PlaneGeometry(planeSize ?? width, planeSize ?? width, 1, 1).rotateX(-Math.PI / 2), material);
   sea.position.set(center, WATER_LEVEL, center);
 
   // Champ côtier : R = hauts-fonds, B = distance au bloc de terre le plus proche.

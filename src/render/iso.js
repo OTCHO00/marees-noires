@@ -1,7 +1,7 @@
 // Projection isométrique et caméra.
-export const TW = 96; // largeur d'une case
-export const TH = 48; // hauteur d'une case
-export const ELEV = 12; // épaisseur des blocs de terre
+export const TW = 120; // largeur d'une case
+export const TH = 60; // hauteur d'une case
+export const ELEV = 24; // épaisseur des blocs de basalte
 
 export const tileCenter = (x, y) => ({ x: ((x - y) * TW) / 2, y: ((x + y) * TH) / 2 });
 
@@ -31,7 +31,7 @@ export class Camera {
 
   zoomAt(factor, sx, sy, w, h) {
     const before = this.toWorld(sx, sy, w, h);
-    this.zoom = Math.min(2.2, Math.max(0.35, this.zoom * factor));
+    this.zoom = Math.min(2, Math.max(0.3, this.zoom * factor));
     const after = this.toWorld(sx, sy, w, h);
     this.x += before.x - after.x;
     this.y += before.y - after.y;

@@ -1,9 +1,10 @@
 // Rendu canvas : boucle d'animation, ordre de profondeur, surbrillances,
-// animations de déplacement, projectiles et textes flottants.
+// animations de déplacement, projectiles, textes flottants et ambiance nocturne.
 import { TW, TH, ELEV, tileCenter, worldToGrid, Camera } from './iso.js';
 import * as S from './sprites.js';
 
-const STEP_MS = 140;
+const STEP_MS = 150;
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 export class Renderer {
   constructor(canvas, game, viewerId) {
@@ -26,6 +27,10 @@ export class Renderer {
     requestAnimationFrame((t) => this.frame(t));
   }
 
+  get accent() {
+    return this.game.faction(this.viewerId)?.color ?? '#E8A33D';
+  }
+
   resize() {
     const dpr = window.devicePixelRatio || 1;
     this.w = this.canvas.clientWidth;
@@ -33,12 +38,20 @@ export class Renderer {
     this.canvas.width = this.w * dpr;
     this.canvas.height = this.h * dpr;
     this.dpr = dpr;
+    const ctx = this.ctx;
+    const r = Math.max(this.w, this.h);
+    this.sea = ctx.createRadialGradient(this.w / 2, this.h * 0.48, 40, this.w / 2, this.h * 0.48, r * 0.75);
+    this.sea.addColorStop(0, '#14272A');
+    this.sea.addColorStop(1, '#050A0B');
+    this.vignette = ctx.createRadialGradient(this.w / 2, this.h / 2, r * 0.32, this.w / 2, this.h / 2, r * 0.72);
+    this.vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    this.vignette.addColorStop(1, 'rgba(0,0,0,0.72)');
   }
 
   // ---------- Événements du jeu → animations ----------
 
   visible(x, y) {
-    return this.viewerId == null || this.game.isExplored(this.viewerId, x, y);
+    return this.viewerId == null || !this.game.faction(this.viewerId).alive || this.game.isExplored(this.viewerId, x, y);
   }
 
   onEvent(e) {
@@ -48,28 +61,32 @@ export class Renderer {
     } else if (e.type === 'attack' || e.type === 'retaliate') {
       const { attacker: a, defender: d } = e;
       if (e.ranged || this.game.stats(a).range > 1) {
-        this.projectiles.push({ from: { x: a.x, y: a.y }, to: { x: d.x, y: d.y }, start: now, dur: 380 });
+        const color = this.game.faction(a.owner).color;
+        this.projectiles.push({ from: { x: a.x, y: a.y }, to: { x: d.x, y: d.y }, start: now, dur: 420, color });
       }
       this.shakes.set(d.id, now);
-      this.addFloat(d.x, d.y, `-${e.damage}`, '#ff5a46', e.ranged ? 300 : 0);
+      this.addFloat(d.x, d.y, `−${e.damage}`, '#F08A7C', e.ranged ? 340 : 0);
     } else if (e.type === 'death') {
       this.ghosts.push({ unit: { ...e.unit }, start: now });
     } else if (e.type === 'heal') {
-      this.addFloat(e.unit.x, e.unit.y, `+${e.amount}`, '#6ee07a');
+      this.addFloat(e.unit.x, e.unit.y, `+${e.amount}`, '#B8EADB');
     } else if (e.type === 'harvest') {
-      this.addFloat(e.x, e.y, '+1 pop', '#f2c14e');
+      this.addFloat(e.x, e.y, '+1 fidèle', '#F5C26B');
     } else if (e.type === 'levelup') {
-      this.addFloat(e.city.x, e.city.y, `Niveau ${e.city.level} !`, '#ffe08a');
+      this.addFloat(e.city.x, e.city.y, `Niveau ${e.city.level}`, '#F5C26B');
     } else if (e.type === 'capture') {
-      this.addFloat(e.city.x, e.city.y, 'Capturé !', '#ffffff');
+      this.addFloat(e.city.x, e.city.y, 'Le feu est allumé', '#F1E9D8');
     } else if (e.type === 'train') {
-      this.addFloat(e.city.x, e.city.y, 'Recrue !', '#ffffff');
+      this.addFloat(e.city.x, e.city.y, 'Nouveau fidèle', '#F1E9D8');
     } else if (e.type === 'upgrade') {
-      this.addFloat(e.unit.x, e.unit.y, 'Galion !', '#ffe08a');
+      this.addFloat(e.unit.x, e.unit.y, 'Navire noir', '#F5C26B');
+    } else if (e.type === 'tide') {
+      for (const t of e.submerged) this.addFloat(t.x, t.y, 'Englouti', '#7FD1B9');
     }
   }
 
   addFloat(x, y, text, color, delay = 0) {
+    if (!this.visible(x, y)) return;
     this.floats.push({ x, y, text, color, start: performance.now() + delay });
   }
 
@@ -93,10 +110,10 @@ export class Renderer {
 
   pick(sx, sy) {
     const wpt = this.camera.toWorld(sx, sy, this.w, this.h);
-    // Les blocs de terre sont surélevés : on teste d'abord la case "haute".
+    // Les blocs de basalte sont surélevés : on teste d'abord la case "haute".
     const high = worldToGrid(wpt.x, wpt.y + ELEV);
     const ht = this.game.tile(high.x, high.y);
-    if (ht && ht.terrain === 'land') return high;
+    if (ht && ht.terrain === 'land' && (ht.sink || 0) < 3) return high;
     const low = worldToGrid(wpt.x, wpt.y);
     return this.game.tile(low.x, low.y) ? low : null;
   }
@@ -110,6 +127,11 @@ export class Renderer {
     this.camera.update(dt);
     this.draw(t);
     requestAnimationFrame((n) => this.frame(n));
+  }
+
+  groundY(t) {
+    if (t.terrain !== 'land' || t.sink >= 3) return 0;
+    return t.sink === 2 ? ELEV - 16 : ELEV;
   }
 
   unitPos(u, now) {
@@ -130,27 +152,22 @@ export class Renderer {
       }
     }
     const c = tileCenter(gx, gy);
-    const tile = this.game.tile(Math.round(gx), Math.round(gy));
-    let lift = tile.terrain === 'land' ? ELEV : 0;
+    let lift = this.groundY(this.game.tile(Math.round(gx), Math.round(gy)));
     const shake = this.shakes.get(u.id);
     let sx = 0;
     if (shake) {
-      const k = (now - shake) / 300;
+      const k = (now - shake) / 320;
       if (k > 1) this.shakes.delete(u.id);
       else sx = Math.sin(k * 30) * 4 * (1 - k);
     }
-    if (anim) lift += Math.abs(Math.sin(((now - anim.start) / STEP_MS) * Math.PI)) * 6;
+    if (anim) lift += Math.abs(Math.sin(((now - anim.start) / STEP_MS) * Math.PI)) * 5;
     return { x: c.x + sx, y: c.y - lift + 4, depth: gx + gy };
   }
 
   draw(now) {
-    const { ctx, game, camera, time } = this;
-    const { dpr } = this;
+    const { ctx, game, camera, time, dpr } = this;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const bg = ctx.createRadialGradient(this.w / 2, this.h / 2, 50, this.w / 2, this.h / 2, Math.max(this.w, this.h));
-    bg.addColorStop(0, '#1b5f88');
-    bg.addColorStop(1, '#0a2a44');
-    ctx.fillStyle = bg;
+    ctx.fillStyle = this.sea;
     ctx.fillRect(0, 0, this.w, this.h);
 
     const z = camera.zoom;
@@ -162,34 +179,30 @@ export class Renderer {
       for (let x = Math.max(0, d - size + 1); x <= Math.min(size - 1, d); x++) order.push(game.tile(x, d - x));
     }
 
-    // Passe 1 : eau et terre.
+    // Passe 1 : eaux.
     for (const t of order) {
-      if (!this.visible(t.x, t.y)) continue;
+      if (!this.visible(t.x, t.y) || t.terrain === 'land') continue;
       const c = tileCenter(t.x, t.y);
-      if (t.terrain !== 'land') S.drawWater(ctx, t, c.x, c.y, time);
+      S.drawWater(ctx, t, c.x, c.y, time);
     }
+    // Passe 2 : basalte, territoire et surbrillances.
     for (const t of order) {
       if (!this.visible(t.x, t.y)) continue;
       const c = tileCenter(t.x, t.y);
-      if (t.terrain === 'land') {
-        const coastal = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
-          const n = game.tile(t.x + dx, t.y + dy);
-          return n && n.terrain !== 'land';
-        });
-        S.drawLand(ctx, t, c.x, c.y, coastal);
-      }
+      if (t.terrain === 'land') S.drawLand(ctx, t, c.x, c.y);
       this.drawTerritory(t, c);
       this.drawHighlight(t, c, now);
     }
 
-    // Passe 2 : décor, ports et unités triés par profondeur.
+    // Passe 3 : décor, cités et unités triés par profondeur.
     const items = [];
     for (const t of order) {
       if (!this.visible(t.x, t.y)) continue;
       const c = tileCenter(t.x, t.y);
       const depth = t.x + t.y;
-      if (t.feature === 'forest') items.push({ depth: depth - 0.1, draw: () => S.drawForest(ctx, t, c.x, c.y, time) });
-      if (t.feature === 'mountain') items.push({ depth: depth - 0.1, draw: () => S.drawMountain(ctx, t, c.x, c.y) });
+      if (t.feature === 'mangrove') items.push({ depth: depth - 0.1, draw: () => S.drawMangrove(ctx, t, c.x, c.y, time) });
+      if (t.feature === 'falaise') items.push({ depth: depth - 0.1, draw: () => S.drawFalaise(ctx, t, c.x, c.y) });
+      if (t.sink) items.push({ depth: depth - 0.15, draw: () => S.drawSinking(ctx, t, c.x, c.y, time) });
       if (t.resource) items.push({ depth: depth - 0.05, draw: () => S.drawResource(ctx, t, c.x, c.y, time) });
       if (t.city != null) {
         const city = game.city(t.city);
@@ -201,29 +214,29 @@ export class Renderer {
       if (!this.visible(u.x, u.y)) continue;
       const p = this.unitPos(u, now);
       const f = game.faction(u.owner);
-      const done = f.human && game.current.id === u.owner && u.moved && u.attacked;
+      const spent = game.current.id === u.owner && u.moved && u.attacked;
       items.push({
         depth: p.depth + 0.3,
-        draw: () => S.drawUnit(ctx, u, f, p.x, p.y, time, { maxHp: game.stats(u).maxHp, alpha: done ? 0.6 : 1 }),
+        draw: () => S.drawUnit(ctx, u, f, p.x, p.y, time, { maxHp: game.stats(u).maxHp, spent }),
       });
     }
-    this.ghosts = this.ghosts.filter((g) => now - g.start < 600);
+    this.ghosts = this.ghosts.filter((g) => now - g.start < 700);
     for (const g of this.ghosts) {
       if (!this.visible(g.unit.x, g.unit.y)) continue;
       const c = tileCenter(g.unit.x, g.unit.y);
-      const lift = game.tile(g.unit.x, g.unit.y).terrain === 'land' ? ELEV : 0;
-      const k = (now - g.start) / 600;
+      const lift = this.groundY(game.tile(g.unit.x, g.unit.y));
+      const k = (now - g.start) / 700;
       items.push({
         depth: g.unit.x + g.unit.y + 0.3,
-        draw: () => S.drawUnit(ctx, g.unit, game.faction(g.unit.owner), c.x, c.y - lift + 4 - k * 14, time, {
-          maxHp: 10, alpha: 1 - k,
+        draw: () => S.drawUnit(ctx, g.unit, game.faction(g.unit.owner), c.x, c.y - lift + 4 + k * 10, time, {
+          maxHp: 10, alpha: 1 - k, spent: true,
         }),
       });
     }
     items.sort((a, b) => a.depth - b.depth);
     for (const it of items) it.draw();
 
-    // Étiquettes des ports (toujours au-dessus).
+    // Étiquettes des cités (toujours au-dessus).
     for (const city of game.cities) {
       if (!this.visible(city.x, city.y)) continue;
       const c = tileCenter(city.x, city.y);
@@ -231,129 +244,125 @@ export class Renderer {
       S.drawCityLabel(ctx, city, f, c.x, c.y - ELEV, this.highlight.selectedCity === city.id);
     }
 
-    // Passe 3 : nuages sur les zones inexplorées.
+    // Passe 4 : brume sur les zones inexplorées.
     for (const t of order) {
       if (this.visible(t.x, t.y)) continue;
       const c = tileCenter(t.x, t.y);
-      S.drawCloud(ctx, t.x, t.y, c.x, c.y, time);
+      S.drawFog(ctx, t.x, t.y, c.x, c.y, time);
     }
 
     this.drawProjectiles(now);
     this.drawFloats(now);
+
+    // Ambiance : lune et vignettage, en coordonnées écran.
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    S.glow(ctx, this.w - 140, 110, 260, '#9FB6B1', 0.45);
+    ctx.fillStyle = this.vignette;
+    ctx.fillRect(0, 0, this.w, this.h);
   }
 
   drawTerritory(t, c) {
     if (t.owner == null) return;
     const f = this.game.faction(t.owner);
-    const cy = t.terrain === 'land' ? c.y - ELEV : c.y;
-    S.diamond(this.ctx, c.x, cy, 1);
-    this.ctx.fillStyle = f.color + '22';
-    this.ctx.fill();
+    const cy = c.y - this.groundY(t);
+    const ctx = this.ctx;
+    S.diamond(ctx, c.x, cy, 1);
+    ctx.fillStyle = S.rgba(f.color, 0.05);
+    ctx.fill();
     const top = { x: c.x, y: cy - TH / 2 };
     const right = { x: c.x + TW / 2, y: cy };
     const bottom = { x: c.x, y: cy + TH / 2 };
     const left = { x: c.x - TW / 2, y: cy };
-    const edges = [
-      [1, 0, right, bottom],
-      [-1, 0, left, top],
-      [0, 1, bottom, left],
-      [0, -1, top, right],
-    ];
-    const ctx = this.ctx;
-    ctx.strokeStyle = f.color;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([7, 4]);
-    for (const [dx, dy, a, b] of edges) {
+    const edges = [[right, bottom], [left, top], [bottom, left], [top, right]];
+    ctx.strokeStyle = S.rgba(f.color, 0.6);
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([8, 5]);
+    DIRS.forEach(([dx, dy], i) => {
       const n = this.game.tile(t.x + dx, t.y + dy);
-      if (n && n.owner === t.owner) continue;
+      if (n && n.owner === t.owner) return;
+      const [a, b] = edges[i];
       ctx.beginPath();
-      ctx.moveTo(a.x + (b.x - a.x) * 0.04, a.y + (b.y - a.y) * 0.04);
-      ctx.lineTo(b.x - (b.x - a.x) * 0.04, b.y - (b.y - a.y) * 0.04);
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
       ctx.stroke();
-    }
+    });
     ctx.setLineDash([]);
   }
 
   drawHighlight(t, c, now) {
     const h = this.highlight;
     const ctx = this.ctx;
-    const cy = t.terrain === 'land' ? c.y - ELEV : c.y;
+    const cy = c.y - this.groundY(t);
     const k = t.y * this.game.size + t.x;
-    const pulse = 0.5 + Math.sin(now / 180) * 0.5;
+    const pulse = 0.5 + Math.sin(now / 220) * 0.5;
+    const accent = this.accent;
     if (h.moves.has(k)) {
-      S.diamond(ctx, c.x, cy, 0.86);
-      ctx.fillStyle = 'rgba(255,255,255,0.22)';
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillStyle = S.rgba(accent, 0.55 + pulse * 0.25);
       ctx.beginPath();
-      ctx.ellipse(c.x, cy, 5, 2.6, 0, 0, Math.PI * 2);
+      ctx.ellipse(c.x, cy, 6, 3, 0, 0, Math.PI * 2);
       ctx.fill();
     }
     if (h.attacks.some((u) => u.x === t.x && u.y === t.y)) {
-      S.diamond(ctx, c.x, cy, 0.9);
-      ctx.fillStyle = `rgba(220,50,40,${0.25 + pulse * 0.2})`;
+      S.diamond(ctx, c.x, cy, 0.92);
+      ctx.fillStyle = S.rgba('#D9604F', 0.12 + pulse * 0.1);
       ctx.fill();
-      ctx.strokeStyle = '#ff5a46';
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#D9604F';
+      ctx.lineWidth = 1.8;
       ctx.stroke();
     }
     if (h.selected && h.selected.x === t.x && h.selected.y === t.y) {
-      S.diamond(ctx, c.x, cy, 0.95);
-      ctx.strokeStyle = `rgba(255,214,102,${0.6 + pulse * 0.4})`;
-      ctx.lineWidth = 3.5;
+      S.diamond(ctx, c.x, cy, 0.84);
+      ctx.fillStyle = S.rgba(accent, 0.12);
+      ctx.fill();
+      ctx.strokeStyle = S.rgba(accent, 0.7 + pulse * 0.3);
+      ctx.lineWidth = 1.6;
       ctx.stroke();
     }
     if (h.hover && h.hover.x === t.x && h.hover.y === t.y) {
       S.diamond(ctx, c.x, cy, 0.95);
-      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(207,227,220,0.25)';
+      ctx.lineWidth = 1;
       ctx.stroke();
     }
   }
 
   drawProjectiles(now) {
     const ctx = this.ctx;
-    this.projectiles = this.projectiles.filter((p) => now - p.start < p.dur + 250);
+    this.projectiles = this.projectiles.filter((p) => now - p.start < p.dur + 300);
     for (const p of this.projectiles) {
       const k = (now - p.start) / p.dur;
       const a = tileCenter(p.from.x, p.from.y);
       const b = tileCenter(p.to.x, p.to.y);
       if (k <= 1) {
         const x = a.x + (b.x - a.x) * k;
-        const y = a.y + (b.y - a.y) * k - Math.sin(k * Math.PI) * 50 - 30;
-        ctx.fillStyle = '#1b1b1b';
+        const y = a.y + (b.y - a.y) * k - Math.sin(k * Math.PI) * 60 - 34;
+        S.glow(ctx, x, y, 22, p.color);
+        ctx.fillStyle = '#F1E9D8';
         ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(230,230,230,0.5)';
-        ctx.beginPath();
-        ctx.arc(a.x, a.y - 30, 8 * (1 - k) + 2, 0, Math.PI * 2);
+        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        const e = (k - 1) * (p.dur / 250);
-        ctx.fillStyle = `rgba(255,170,60,${1 - e})`;
-        ctx.beginPath();
-        ctx.arc(b.x, b.y - 22, 6 + e * 16, 0, Math.PI * 2);
-        ctx.fill();
+        const e = (k - 1) * (p.dur / 300);
+        S.glow(ctx, b.x, b.y - 26, 20 + e * 40, p.color, 1 - e);
       }
     }
   }
 
   drawFloats(now) {
     const ctx = this.ctx;
-    this.floats = this.floats.filter((f) => now - f.start < 1200);
+    this.floats = this.floats.filter((f) => now - f.start < 1400);
     for (const f of this.floats) {
-      const k = (now - f.start) / 1200;
+      const k = (now - f.start) / 1400;
       if (k < 0) continue;
       const c = tileCenter(f.x, f.y);
       ctx.globalAlpha = 1 - k * k;
-      ctx.font = 'bold 18px "Pirata One", Georgia, serif';
+      ctx.font = '600 20px "Cormorant SC", Georgia, serif';
       ctx.textAlign = 'center';
       ctx.lineWidth = 4;
-      ctx.strokeStyle = 'rgba(20,10,0,0.8)';
-      ctx.strokeText(f.text, c.x, c.y - 52 - k * 30);
+      ctx.strokeStyle = 'rgba(5,9,9,0.9)';
+      ctx.strokeText(f.text, c.x, c.y - 70 - k * 26);
       ctx.fillStyle = f.color;
-      ctx.fillText(f.text, c.x, c.y - 52 - k * 30);
+      ctx.fillText(f.text, c.x, c.y - 70 - k * 26);
       ctx.globalAlpha = 1;
     }
   }

@@ -32,7 +32,8 @@ Le dossier `dist/` est un site statique : il se déploie tel quel sur GitHub Pag
 - **Combat** : la force dépend des PV restants. Mangroves, falaises et cités donnent un bonus de défense. Le défenseur riposte s'il survit et a la portée.
 - **Mer** : avec *Navigation*, une unité embarque depuis une cité et devient une barque. *Abysses* ouvre les eaux profondes, *Navires noirs* permet d'améliorer les barques.
 - **Marée** : à partir du tour 6, puis tous les 3 tours, des côtes commencent à sombrer. Après 3 stades elles deviennent des hauts-fonds, et les unités qui s'y trouvent sont recueillies en barque.
-- **Victoire** : être le dernier culte encore allumé, ou avoir le meilleur score au tour 30.
+- **Savoirs interdits** : 20 savoirs en 5 branches (Mer, Récoltes, Guerre, Lumière, Foi), de 4 rangs chacune, présentés en constellations.
+- **Victoire** : être le dernier culte encore allumé, réveiller le Dormeur (dernier savoir de la Foi), ou avoir le meilleur score au tour 30.
 
 | Unité          | PV | Att | Déf | Mvt | Portée | Coût | Savoir requis |
 | -------------- | -- | --- | --- | --- | ------ | ---- | ------------- |
@@ -60,10 +61,12 @@ src/
 │   ├── stage.js       # caméra orthographique isométrique, lune, ombres, bloom
 │   ├── models.js      # modèles low-poly générés en code, fusion des géométries
 │   ├── renderer3d.js  # synchronisation avec le jeu, animations, brume, lumières
+│   ├── menuScene.js   # scène 3D du menu de départ (falaise, phare, baie)
 │   └── demo.js        # scène d'essai (demo.html)
 ├── ui/
 │   ├── hud.js       # sélection, panneaux, savoirs interdits, messages
-│   └── sigil.js     # sceaux des cultes en SVG
+│   ├── sigil.js     # sceaux des cultes en SVG
+│   └── techIcons.js # icônes des savoirs interdits
 ├── main.js          # écran titre, entrées, enchaînement des tours
 └── style.css        # thème nocturne
 tests/game.test.js

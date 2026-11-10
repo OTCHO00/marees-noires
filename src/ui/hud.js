@@ -1,5 +1,6 @@
 // Interface : sélection, panneau contextuel, savoirs interdits, messages.
-import { UNITS, TECHS, RESOURCES, VESSELS } from '../core/data.js';
+import { UNITS, TECHS, RESOURCES, VESSELS, BRANCHES, RULES } from '../core/data.js';
+import { TECH_ICONS } from './techIcons.js';
 import { sigil, oil } from './sigil.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -27,7 +28,13 @@ export class Hud {
     document.documentElement.style.setProperty('--accent-light', f.light);
     $('#factionSigil').innerHTML = sigil(f, 34);
     $('#factionName').textContent = f.name;
-    $('#topbar').classList.remove('hidden');
+    $('#hud').classList.remove('hidden');
+    $('#registreTab').onclick = () => {
+      const open = $('#registre').classList.toggle('closed');
+      $('#registreTab').setAttribute('aria-expanded', String(!open));
+    };
+    $('#minimap').addEventListener('click', (e) => this.minimapClick(e));
+    setInterval(() => this.drawMinimap(), 250);
     $('#techBtn').onclick = () => this.openTech();
     $('#endTurnBtn').onclick = () => this.onEndTurn?.();
     $('#techModal').addEventListener('click', (e) => {
@@ -71,7 +78,8 @@ export class Hud {
         return;
       }
     }
-    const unit = g.unitAt(x, y);
+    const found = g.unitAt(x, y);
+    const unit = found && g.unitVisibleTo(this.me, found) ? found : null;
     const city = g.cityAt(x, y);
     if (unit && !(sel?.kind === 'unit' && sel.unit === unit)) this.select({ kind: 'unit', unit });
     else if (city && !(sel?.kind === 'city' && sel.city === city)) this.select({ kind: 'city', city });
@@ -141,7 +149,12 @@ export class Hud {
     const n = g.tidesIn();
     $('#tide').innerHTML = n <= 0 ? 'La marée <b>monte</b>' : `La marée monte dans <b>${n} tour${n > 1 ? 's' : ''}</b>`;
     $('#tideChip').classList.toggle('soon', n <= 1);
-    $('#score').textContent = g.score(this.me);
+    // La jauge se remplit à mesure que la prochaine marée approche.
+    const period = g.turn < RULES.firstTide ? RULES.firstTide - 1 : RULES.tideEvery;
+    const fill = Math.max(0.04, Math.min(1, 1 - Math.max(0, n) / period));
+    $('#tideFill').setAttribute('width', String(220 * fill));
+    this.renderRegistre();
+    this.drawMinimap();
     const anyReady = g.unitsOf(this.me).some((u) => !u.moved && (g.reachable(u).size || g.attackTargets(u).length || g.canCapture(u)));
     $('#endTurnBtn').classList.toggle('pulse', this.myTurn && !anyReady);
     this.renderPanel();
@@ -184,6 +197,7 @@ export class Hud {
         actions += `<button class="btn btn-accent" data-action="capture">Allumer le feu de ${city.owner == null ? 'ce sanctuaire' : city.name}</button>`;
       }
       if (g.canHeal(u)) actions += '<button class="btn" data-action="heal">Veiller</button>';
+      if (g.canSacrifice(u)) actions += `<button class="btn" data-action="sacrifice">Sacrifier · +5 ${oil}</button>`;
       if (u.vessel === 'barque') {
         const err = g.upgradeError(u);
         actions += `<button class="btn" data-action="upgrade" ${err ? `disabled title="${err}"` : ''}>Navire noir · ${VESSELS.navire.cost} ${oil}</button>`;
@@ -265,6 +279,11 @@ export class Hud {
     if (!this.myTurn) return;
     if (action === 'capture') g.capture(sel.unit);
     else if (action === 'heal') g.heal(sel.unit);
+    else if (action === 'sacrifice') {
+      if (g.sacrifice(sel.unit)) this.toast('Le fidèle rejoint la mer. +5 huile.');
+      this.select(null);
+      return;
+    }
     else if (action === 'upgrade') g.upgradeShip(sel.unit);
     else if (action === 'harvest') g.harvest(sel.x, sel.y);
     else if (action === 'train') {
@@ -274,7 +293,86 @@ export class Hud {
     this.select(this.sel);
   }
 
-  // ---------- Savoirs interdits ----------
+  // ---------- Registre et mini-carte ----------
+
+  renderRegistre() {
+    const g = this.game;
+    const rows = [...g.factions].sort((a, b) => g.score(b.id) - g.score(a.id)).map((f) => {
+      const pips = `<i style="background:${f.color}"></i>`.repeat(g.citiesOf(f.id).length);
+      return `<div class="reg-row${f.alive ? '' : ' dead'}">
+        <div class="reg-top"><span style="color:${f.color}">${f.name}</span><b>${g.score(f.id)}</b></div>
+        <div class="reg-pips">${pips || '<em>éteint</em>'}</div>
+      </div>`;
+    });
+    $('#registreList').innerHTML = rows.join('');
+  }
+
+  minimapLayout() {
+    const c = $('#minimap');
+    const size = this.game.size;
+    const s = Math.min((c.width - 16) / size, ((c.height - 12) * 2) / size);
+    return { s, ox: c.width / 2, oy: (c.height - (size * s) / 2) / 2 };
+  }
+
+  drawMinimap() {
+    const c = $('#minimap');
+    if (!c || $('#hud').classList.contains('hidden')) return;
+    const g = this.game;
+    const ctx = c.getContext('2d');
+    const { s, ox, oy } = this.minimapLayout();
+    const at = (x, y) => [ox + ((x - y) * s) / 2, oy + ((x + y) * s) / 4 + s / 4];
+    ctx.fillStyle = '#05090a';
+    ctx.fillRect(0, 0, c.width, c.height);
+    const diamond = (x, y, k = 1) => {
+      const [px, py] = at(x, y);
+      ctx.beginPath();
+      ctx.moveTo(px, py - (s / 4) * k);
+      ctx.lineTo(px + (s / 2) * k, py);
+      ctx.lineTo(px, py + (s / 4) * k);
+      ctx.lineTo(px - (s / 2) * k, py);
+      ctx.closePath();
+    };
+    for (const t of g.tiles) {
+      if (!this.renderer.visible(t.x, t.y)) continue;
+      diamond(t.x, t.y, 1.04);
+      ctx.fillStyle = t.terrain === 'land' ? (t.owner != null ? g.faction(t.owner).color + '55' : '#2a3a36') : t.terrain === 'shallow' ? '#14302e' : '#0b181b';
+      if (t.terrain === 'land' && t.owner != null) {
+        ctx.fill();
+        ctx.fillStyle = '#1F2E2B88';
+      }
+      ctx.fill();
+    }
+    for (const city of g.cities) {
+      if (!this.renderer.visible(city.x, city.y)) continue;
+      const [px, py] = at(city.x, city.y);
+      ctx.fillStyle = city.owner != null ? g.faction(city.owner).color : '#8FA3A0';
+      ctx.beginPath();
+      ctx.arc(px, py, city.owner != null ? 2.8 : 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Zone visible à l'écran.
+    const v = this.renderer.stage.view;
+    const [vx, vy] = at(v.target.x, v.target.z);
+    const k = v.zoom * s * 0.55;
+    ctx.strokeStyle = '#F1E9D8';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(vx - k * 1.6, vy - k * 0.8, k * 3.2, k * 1.6);
+  }
+
+  minimapClick(e) {
+    const c = $('#minimap');
+    const r = c.getBoundingClientRect();
+    const mx = ((e.clientX - r.left) / r.width) * c.width;
+    const my = ((e.clientY - r.top) / r.height) * c.height;
+    const { s, ox, oy } = this.minimapLayout();
+    const dx = (mx - ox) / (s / 2);
+    const dy = (my - oy - s / 4) / (s / 4);
+    const x = Math.round((dx + dy) / 2);
+    const y = Math.round((dy - dx) / 2);
+    if (this.game.tile(x, y)) this.renderer.centerOn(x, y);
+  }
+
+  // ---------- Savoirs interdits : constellations ----------
 
   openTech() {
     $('#techModal').classList.remove('hidden');
@@ -285,31 +383,104 @@ export class Hud {
     $('#techModal').classList.add('hidden');
   }
 
+  techState(id) {
+    const g = this.game;
+    if (g.hasTech(this.me, id)) return 'owned';
+    const req = TECHS[id].req;
+    return !req || g.hasTech(this.me, req) ? 'available' : 'locked';
+  }
+
   renderTech() {
     const g = this.game;
-    const tree = $('#techTree');
-    tree.innerHTML = '';
-    for (const [id, tech] of Object.entries(TECHS)) {
-      const owned = g.hasTech(this.me, id);
-      const locked = tech.req && !g.hasTech(this.me, tech.req);
-      const cost = g.techCost(this.me, id);
-      const poor = !owned && !locked && g.faction(this.me).stars < cost;
-      const state = owned ? 'owned' : locked ? 'locked' : poor ? 'poor' : 'available';
-      const el = document.createElement('button');
-      el.className = `tech ${state} ${tech.tier === 1 ? 'root' : ''}`;
-      el.style.setProperty('--col', tech.branch + 1);
-      el.style.setProperty('--row', tech.tier);
-      el.innerHTML = `<span class="tname">${tech.name}</span><span class="tdesc">${tech.desc}</span>
-        <span class="cost">${owned ? 'Acquis' : locked ? `Après ${TECHS[tech.req].name}` : `${cost} ${oil}`}</span>`;
-      el.onclick = () => {
-        if (!this.myTurn || state !== 'available') return;
-        if (g.research(id)) {
-          this.toast(`Savoir acquis : ${tech.name}.`);
-          this.select(this.sel);
-        }
-      };
-      tree.appendChild(el);
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const ids = Object.keys(TECHS);
+    // Forme de chaque constellation : décalage horizontal et hauteur relative par rang.
+    const SHAPES = [
+      [[0, 0.7], [-60, 0.55], [30, 0.4], [-30, 0.23]],
+      [[-20, 0.7], [50, 0.56], [-40, 0.42], [30, 0.26]],
+      [[10, 0.7], [-50, 0.54], [60, 0.42], [0, 0.24]],
+      [[-30, 0.7], [40, 0.55], [-50, 0.39], [20, 0.25]],
+      [[20, 0.7], [-40, 0.56], [40, 0.41], [-10, 0.22]],
+    ];
+    // Les constellations occupent l'espace entre le titre et la fiche du bas.
+    const top = 120;
+    const bottom = Math.max(top + 200, H - 240);
+    const pos = (id) => {
+      const t = TECHS[id];
+      const [dx, fy] = SHAPES[t.branch][t.tier - 1];
+      return { x: W * (0.1 + t.branch * 0.2) + dx, y: top + ((bottom - top) * (fy - 0.22)) / 0.48 };
+    };
+    if (!this.techSel || !TECHS[this.techSel]) this.techSel = ids.find((id) => this.techState(id) === 'available') ?? ids[0];
+
+    // Ciel étoilé, liens des constellations et noms des branches.
+    let seed = 7;
+    const rnd = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    let stars = '';
+    for (let i = 0; i < 160; i++) stars += `M${(rnd() * W).toFixed(0)} ${(rnd() * H * 0.78).toFixed(0)} l0 0 `;
+    let on = '';
+    let off = '';
+    for (const id of ids) {
+      const req = TECHS[id].req;
+      if (!req) continue;
+      const a = pos(req);
+      const b = pos(id);
+      const seg = `M${a.x} ${a.y} L${b.x} ${b.y} `;
+      if (this.techState(id) === 'owned') on += seg;
+      else off += seg;
     }
+    const names = BRANCHES.map((br, i) => `<text x="${W * (0.1 + i * 0.2)}" y="${bottom + 66}" text-anchor="middle" class="branch-name" fill="${br.color}">${br.name}</text>`).join('');
+    const sky = $('#techSky');
+    sky.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    sky.innerHTML = `<path d="${stars}" stroke="#CFE3DC" stroke-width="1.6" stroke-linecap="round" opacity="0.35"/>
+      <path d="${off}" stroke="#2C4A44" stroke-width="1.5" stroke-dasharray="4 5" fill="none"/>
+      <path d="${on}" stroke="#F5C26B" stroke-width="2" fill="none" opacity="0.85"/>${names}`;
+
+    $('#techStars').innerHTML = ids.map((id) => {
+      const t = TECHS[id];
+      const p = pos(id);
+      const state = this.techState(id);
+      const color = BRANCHES[t.branch].color;
+      const ink = state === 'owned' ? '#1A1206' : state === 'available' ? color : '#4c5f5b';
+      return `<button class="star ${state}${id === this.techSel ? ' selected' : ''}" data-tech="${id}" style="left:${p.x}px;top:${p.y}px;--c:${color}" aria-label="${t.name}">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="${ink}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button><span class="star-label ${state}" style="left:${p.x}px;top:${p.y}px">${t.name}</span>`;
+    }).join('');
+    $('#techStars').querySelectorAll('[data-tech]').forEach((b) => {
+      b.onclick = () => {
+        this.techSel = b.dataset.tech;
+        this.renderTech();
+      };
+    });
+    const owned = ids.filter((id) => g.hasTech(this.me, id)).length;
+    $('#techCount').textContent = `Les constellations qu’on ne voit que sous la mer · ${owned} savoirs sur ${ids.length}`;
+
+    // Fiche du savoir choisi.
+    const id = this.techSel;
+    const t = TECHS[id];
+    const color = BRANCHES[t.branch].color;
+    const state = this.techState(id);
+    const err = state === 'owned' ? null : g.researchError(this.me, id);
+    const can = this.myTurn && !err;
+    const action = state === 'owned' ? 'Déjà acquis' : `Apprendre · ${g.techCost(this.me, id)} ${oil}`;
+    const card = $('#techCard');
+    card.style.setProperty('--c', color);
+    card.innerHTML = `<div class="badge"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="info">
+        <span class="meta">${BRANCHES[t.branch].name.toUpperCase()} · RANG ${t.tier}${t.req ? ` · REQUIERT ${TECHS[t.req].name.toUpperCase()}` : ''}</span>
+        <h3>${t.name}</h3>
+        <p>${t.desc}${t.lore ? ` <em>« ${t.lore} »</em>` : ''}</p>
+      </div>
+      <button class="btn ${can ? 'btn-accent' : ''}" id="techLearn" ${can ? '' : `disabled title="${err ?? 'Attends ton tour.'}"`}>${action}</button>`;
+    $('#techLearn').onclick = () => {
+      if (g.research(id)) {
+        this.toast(`Savoir acquis : ${t.name}.`, color);
+        this.select(this.sel);
+      }
+    };
   }
 
   // ---------- Messages ----------

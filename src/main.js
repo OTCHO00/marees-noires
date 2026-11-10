@@ -7,6 +7,7 @@ import { FACTIONS } from './core/data.js';
 import { Renderer3D } from './three/renderer3d.js';
 import { Hud } from './ui/hud.js';
 import { sigil } from './ui/sigil.js';
+import { createMenuScene } from './three/menuScene.js';
 
 const $ = (sel) => document.querySelector(sel);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -18,6 +19,13 @@ const SIZES = [
 ];
 
 const setup = { faction: 0, rivals: 2, size: 18 };
+
+const MOTTOS = [
+  '« Tant qu’une flamme brûle, la mer n’a pas gagné. »',
+  '« Nous sommes nés de l’eau, nous y retournerons. »',
+  '« Ce qui dort sous les flots a soif. »',
+  '« Nous avons vu ce qui vient. Nous attendons. »',
+];
 
 // ---------- Écran titre ----------
 
@@ -43,8 +51,12 @@ picker(
   $('#factionPicker'),
   FACTIONS.map((f) => ({ id: f.id, color: f.color, html: `${sigil(f, 44)}${f.name}` })),
   (i) => i.id === setup.faction,
-  (i) => (setup.faction = i.id),
+  (i) => {
+    setup.faction = i.id;
+    $('#factionGift').textContent = MOTTOS[i.id];
+  },
 );
+$('#factionGift').textContent = MOTTOS[setup.faction];
 picker(
   $('#rivalPicker'),
   [1, 2, 3].map((n) => ({ n, html: `${n} culte${n > 1 ? 's' : ''}` })),
@@ -58,7 +70,34 @@ picker(
   (i) => (setup.size = i.size),
 );
 
+// Le menu : une scène 3D vivante, puis le choix de l'expédition.
+const menu = createMenuScene($('#menuScene'));
+const showMenu = (id) => ['#menuMain', '#menuSetup', '#menuRulesPanel'].forEach((s) => $(s).classList.toggle('hidden', s !== id));
+$('#menuNew').onclick = () => {
+  $('#sandbox').checked = false;
+  showMenu('#menuSetup');
+};
+$('#menuSandbox').onclick = () => {
+  $('#sandbox').checked = true;
+  showMenu('#menuSetup');
+};
+$('#menuRules').onclick = () => showMenu('#menuRulesPanel');
+document.querySelectorAll('[data-back]').forEach((b) => {
+  b.onclick = () => showMenu('#menuMain');
+});
+const menuKeys = (e) => {
+  if (e.key === 'Enter') {
+    if (!$('#menuSetup').classList.contains('hidden')) $('#startBtn').click();
+    else showMenu('#menuSetup');
+  } else if (e.key === 'Escape') {
+    showMenu('#menuMain');
+  }
+};
+window.addEventListener('keydown', menuKeys);
+
 $('#startBtn').onclick = () => {
+  window.removeEventListener('keydown', menuKeys);
+  menu.dispose();
   $('#startScreen').classList.add('hidden');
   startGame();
 };
@@ -120,7 +159,9 @@ function showEnd(game, me) {
   const winner = r.winner != null ? game.faction(r.winner) : null;
   $('#endReason').textContent = r.reason === 'conquest'
     ? (won ? 'Tous les autres feux se sont éteints. L’archipel n’obéit plus qu’à toi.' : `${winner.name} règnent seuls sur l’archipel.`)
-    : r.reason === 'score'
+    : r.reason === 'awakening'
+      ? (won ? 'Ce qui dormait sous l’archipel s’est éveillé à ton appel. Plus rien ne peut s’opposer à ton culte.' : `${winner.name} ont réveillé le Dormeur. L’archipel leur appartient.`)
+      : r.reason === 'score'
       ? (won ? 'Après trente marées, ton culte brille plus fort que tous les autres.' : `Après trente marées, ${winner.name} l’emportent.`)
       : 'Ta dernière cité est tombée. La brume a tout recouvert.';
   $('#scoreTable').innerHTML = [...game.factions]

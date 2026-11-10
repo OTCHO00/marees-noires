@@ -14,51 +14,93 @@
   <body>
     <canvas id="board"></canvas>
 
-    <header id="topbar" class="hidden">
-      <div id="factionSigil" class="topsigil"></div>
-      <p id="factionName" class="faction-name"></p>
-      <span class="sep"></span>
-      <div class="stat" title="Huile : la ressource des cultes">
-        <span class="label">Huile</span><b id="stars">0</b><small id="income"></small>
+    <!-- Interface en jeu : un élément par coin de l'écran. -->
+    <div id="hud" class="hidden">
+      <div class="corner tl">
+        <div id="factionSigil" class="sigil-halo"></div>
+        <div class="who">
+          <p id="factionName"></p>
+          <p class="oil-line"><b id="stars">0</b><span>huile</span><small id="income"></small></p>
+        </div>
       </div>
-      <div class="stat">
-        <span class="label">Tour</span><b id="turn">1</b><small>/ 30</small>
+
+      <div class="corner tr">
+        <p class="turn-line"><span>Tour</span><b id="turn">1</b><small>/ 30</small></p>
+        <div id="tideChip" class="tide-line" title="À partir du tour 6, puis tous les 3 tours, des côtes commencent à sombrer">
+          <span id="tide"></span>
+          <svg viewBox="0 0 220 34" width="220" height="34" aria-hidden="true">
+            <defs>
+              <linearGradient id="tideWater" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7FD1B9" stop-opacity="0.9" /><stop offset="1" stop-color="#1d4440" /></linearGradient>
+              <clipPath id="tideClip"><rect id="tideFill" x="0" y="0" width="0" height="34" /></clipPath>
+            </defs>
+            <rect x="1" y="1" width="218" height="32" rx="16" fill="#060c0d" stroke="#2C4A44" />
+            <path clip-path="url(#tideClip)" d="M2 17 Q20 11 38 17 T74 17 T110 17 T146 17 T182 17 T218 17 L218 33 L2 33Z" fill="url(#tideWater)" />
+            <rect x="1" y="1" width="218" height="32" rx="16" fill="none" stroke="#7FD1B9" stroke-opacity="0.45" />
+          </svg>
+        </div>
       </div>
-      <div id="tideChip" class="tide" title="Toutes les 3 tours, des côtes commencent à sombrer">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M2 14 q5 -4 10 0 t10 0 M2 19 q5 -4 10 0 t10 0" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M12 3 L12 10 M9 7 L12 10 L15 7" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
-        <span id="tide"></span>
+
+      <aside id="registre" class="registre">
+        <button id="registreTab" class="registre-tab" aria-expanded="true"><span>Registre</span></button>
+        <div class="registre-body">
+          <p class="registre-title">Registre des cultes</p>
+          <div id="registreList"></div>
+          <p class="registre-note">Un trait par cité · score à droite</p>
+        </div>
+      </aside>
+
+      <div class="corner br">
+        <canvas id="minimap" width="250" height="150" aria-label="Mini-carte : clique pour t'y rendre"></canvas>
+        <div class="br-actions">
+          <button id="techBtn" class="btn" title="Savoirs interdits (T)">Savoirs</button>
+          <button id="endTurnBtn" class="btn btn-accent" title="Fin du tour (Entrée)">Éteindre les feux</button>
+        </div>
       </div>
-      <div class="stat score" title="Score">
-        <span class="label">Score</span><b id="score">0</b>
-      </div>
-      <span class="spacer"></span>
-      <button id="techBtn" class="btn" title="Savoirs interdits (T)">Savoirs <span class="label-long">interdits</span></button>
-      <button id="endTurnBtn" class="btn btn-accent" title="Fin du tour (Entrée)">Éteindre les feux</button>
-    </header>
+    </div>
 
     <aside id="panel" class="hidden"></aside>
     <div id="tooltip" class="hidden"></div>
     <div id="toasts"></div>
     <div id="banner" class="hidden"></div>
 
-    <div id="techModal" class="modal hidden">
-      <div class="modal-card">
-        <button class="close" data-close aria-label="Fermer">
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" stroke-width="1.8" /></svg>
-        </button>
+    <!-- Savoirs interdits : constellations sous la mer. -->
+    <div id="techModal" class="techsky hidden">
+      <svg id="techSky" class="techsky-layer" aria-hidden="true"></svg>
+      <div id="techStars" class="techsky-layer"></div>
+      <header class="techsky-head">
         <h2>Savoirs interdits</h2>
-        <p class="sub">Brûle ton huile pour apprendre ce que la mer a oublié. Chaque cité de plus rend le savoir plus cher.</p>
-        <div id="techTree" class="tech-tree"></div>
-      </div>
+        <p id="techCount"></p>
+      </header>
+      <button class="techsky-close close" data-close aria-label="Fermer">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" stroke-width="1.8" /></svg>
+      </button>
+      <div id="techCard" class="techsky-card"></div>
     </div>
 
-    <section id="startScreen" class="screen">
-      <div class="start-card">
-        <p class="kicker">Un jeu de stratégie au tour par tour</p>
-        <h1>Marées noires</h1>
-        <p class="tagline">L'archipel s'enfonce. Seuls les feux des cultes percent encore la brume.</p>
-        <h3>Choisis ton culte</h3>
+    <!-- Menu de départ : une scène 3D vivante derrière le menu. -->
+    <section id="startScreen" class="menu">
+      <canvas id="menuScene"></canvas>
+      <div class="menu-shade"></div>
+
+      <div id="menuMain" class="menu-main">
+        <p class="kicker">L'archipel s'enfonce</p>
+        <h1>Marées<br />noires</h1>
+        <p class="tagline">Quatre cultes se disputent les dernières îles. Seuls leurs feux percent encore la brume.</p>
+        <nav class="menu-nav" aria-label="Menu principal">
+          <button id="menuNew" class="menu-btn primary">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="8" y="7" width="8" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M10 7 L12 4 L14 7 M12 18 V21" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
+            Nouvelle partie
+          </button>
+          <button id="menuSandbox" class="menu-btn">Bac à sable</button>
+          <button id="menuRules" class="menu-btn">Comment jouer</button>
+        </nav>
+      </div>
+
+      <div id="menuSetup" class="menu-panel hidden">
+        <h2>Nouvelle expédition</h2>
+        <h3>Ton culte</h3>
         <div id="factionPicker" class="picker factions"></div>
+        <p id="factionGift" class="gift"></p>
         <div class="row">
           <div>
             <h3>Cultes rivaux</h3>
@@ -73,21 +115,28 @@
           <input type="checkbox" id="sandbox" />
           <span>Bac à sable : carte révélée, huile illimitée, fidèles sans limite</span>
         </label>
-        <button id="startBtn" class="btn btn-accent big">Allumer la première lanterne</button>
-        <details class="rules">
-          <summary>Comment jouer</summary>
-          <ul>
-            <li><b>Explore</b> l'archipel : la brume ne se lève qu'autour de tes fidèles et de tes cités.</li>
-            <li><b>Allume les sanctuaires</b> : reste un tour sur un sanctuaire, puis allumes-y le feu de ton culte.</li>
-            <li><b>Récolte</b> nacre, épaves et reliques dans ton territoire pour faire grandir tes cités.</li>
-            <li><b>Appelle des fidèles</b> dans tes cités et apprends les <b>savoirs interdits</b>.</li>
-            <li><b>La marée monte</b> tous les 3 tours à partir du tour 6 : certaines côtes s'enfoncent puis disparaissent.</li>
-            <li>Avec <b>Navigation</b>, tes fidèles prennent la mer en barque depuis une cité.</li>
-            <li>Gagne en éteignant tous les autres cultes, ou avec le meilleur score au tour 30.</li>
-          </ul>
-          <p class="keys">Glisser : déplacer la carte · Molette : zoom · Entrée : fin du tour · T : savoirs · Tab : unité suivante · Échap : désélectionner</p>
-        </details>
+        <div class="panel-actions">
+          <button class="btn back" data-back>Retour</button>
+          <button id="startBtn" class="btn btn-accent big">Lever l'ancre</button>
+        </div>
       </div>
+
+      <div id="menuRulesPanel" class="menu-panel hidden">
+        <h2>Comment jouer</h2>
+        <ul class="rules-list">
+          <li><b>Explore</b> l'archipel : la brume ne se lève qu'autour de tes fidèles et de tes cités.</li>
+          <li><b>Allume les sanctuaires</b> : reste un tour sur un sanctuaire, puis allumes-y le feu de ton culte.</li>
+          <li><b>Récolte</b> nacre, épaves et reliques dans ton territoire pour faire grandir tes cités.</li>
+          <li><b>Appelle des fidèles</b> dans tes cités et apprends les <b>savoirs interdits</b>.</li>
+          <li><b>La marée monte</b> tous les 3 tours à partir du tour 6 : certaines côtes s'enfoncent puis disparaissent.</li>
+          <li>Avec <b>Navigation</b>, tes fidèles prennent la mer en barque depuis une cité.</li>
+          <li>Gagne en éteignant tous les autres cultes, en réveillant le Dormeur, ou avec le meilleur score au tour 30.</li>
+        </ul>
+        <p class="keys">Glisser : déplacer la carte · Molette : zoom · Entrée : fin du tour · T : savoirs · Tab : unité suivante · Échap : désélectionner</p>
+        <div class="panel-actions"><button class="btn back" data-back>Retour</button></div>
+      </div>
+
+      <p class="menu-foot">Version 0.4 · Entrée pour commencer</p>
     </section>
 
     <section id="endScreen" class="screen hidden">

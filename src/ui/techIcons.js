@@ -1,0 +1,23 @@
+// Icônes des savoirs interdits (tracés 24 × 24, à dessiner en contour).
+export const TECH_ICONS = {
+  navigation: 'M3 16h18l-3 4H6zM12 4v12M12 5l6 8h-6',
+  abysses: 'M3 8c3-2 6 2 9 0s6 2 9 0M3 13c3-2 6 2 9 0s6 2 9 0M12 16v5M10 19l2 2 2-2',
+  navires: 'M3 15h18M5 15c1 3 3 4 7 4s6-1 7-4M8 15V5M15 15V8M8 6c3 1 5 1 6 0M15 9c2 1 3 1 4 0',
+  leviathan: 'M6 21c0-6 6-6 6-11 0-3-2-4-4-3M14 21c0-4 4-5 4-9 0-2-2-3-3-2',
+  plongee: 'M3 14c2-2 4 2 6 0s4 2 6 0 4 2 6 0M12 3v7M9 7l3 3 3-3',
+  pillage: 'M4 18h16M6 18l2-7h8l2 7M9 11l1-5M14 11l2-4',
+  archeologie: 'M9 21v-9a3 3 0 0 1 6 0v9M10 14h4M8 21h8M10.5 9.5h.01M13.5 9.5h.01',
+  digues: 'M3 17h18M5 17v-6h4v6M11 17V9h4v8M17 17v-4h3M3 21c3-2 6 2 9 0s6 2 9 0',
+  harpons: 'M4 20L19 5M19 5l-5 1M19 5l-1 5M8 16l-2-2',
+  rites: 'M3 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0M15 9a3 3 0 1 0 6 0 3 3 0 1 0-6 0M11 17a2 2 0 1 0 4 0 2 2 0 1 0-4 0',
+  mortiers: 'M3 9c4-5 14-5 18 0-4 6-14 6-18 0zM6 9l2 2 2-2 2 2 2-2 2 2 2-2',
+  chant: 'M9 18V6l10-2v12M9 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0M19 16a2 2 0 1 1-4 0 2 2 0 0 1 4 0',
+  guet: 'M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12zM9 12a3 3 0 1 0 6 0 3 3 0 1 0-6 0',
+  phares: 'M10 21l1-11h2l1 11zM9 10h6M10 10V6h4v4M12 6V3M4 7l4 2M20 7l-4 2',
+  sourdes: 'M8 7h8v10H8zM10 4h4v3M4 20L20 4',
+  oeil: 'M2 12c3-4 6-6 10-6s7 2 10 6c-3 4-6 6-10 6S5 16 2 12zM12 8v8M8 12h8',
+  liturgie: 'M12 3v18M7 8h10M8 21h8',
+  processions: 'M6 20V10M12 20V7M18 20V11M6 8V7M12 5V4M18 9V8M4 20h16',
+  sacrifice: 'M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z',
+  eveil: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2',
+};

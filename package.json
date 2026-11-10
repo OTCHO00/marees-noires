@@ -1,7 +1,7 @@
 {
-  "name": "archipel",
+  "name": "marees-noires",
   "version": "0.1.0",
-  "description": "Archipel — un jeu de stratégie au tour par tour sur un archipel pirate, inspiré de Polytopia.",
+  "description": "Marées noires — un jeu de stratégie au tour par tour où des cultes rivaux se disputent un archipel qui sombre, inspiré de Polytopia.",
   "private": true,
   "type": "module",
   "scripts": {

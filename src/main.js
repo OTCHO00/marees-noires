@@ -73,7 +73,7 @@ function startGame() {
   const me = setup.faction;
   const renderer = new Renderer($('#board'), game, me);
   const hud = new Hud(game, renderer, me);
-  window.archipel = { game, renderer, hud }; // pratique pour déboguer dans la console
+  window.marees = { game, renderer, hud }; // pratique pour déboguer dans la console
 
   const capital = game.citiesOf(me)[0];
   renderer.centerOn(capital.x, capital.y, true);

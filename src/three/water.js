@@ -1,36 +1,94 @@
-// Mer nocturne : un plan lisse dont les vagues sont calculées par pixel
-// dans le shader. Les reflets de la lune et des lanternes ondulent, les
-// hauts-fonds s'éclaircissent et l'écume bat le pied des îles.
-// On part du matériau standard de Three.js (lumières, ombres, brouillard)
-// et on remplace la normale, la couleur et l'émission.
+// Mer stylisée : aplats de couleur par paliers (abysses, large, hauts-fonds),
+// contours d'écume dessinés autour des îles, vaguelettes graphiques au large
+// et halos chauds sous les lanternes. Pas de reflets réalistes : on vise une
+// lecture nette, comme une illustration.
 import * as THREE from 'three';
 import { WATER_LEVEL } from './models.js';
 
-const RES = 6; // texels du champ côtier par unité de carte
+const RES = 8; // texels du champ côtier par unité de carte
+const MAX_LIGHTS = 14;
+const FAR = 1.5; // distance à la côte encodée dans le champ (en cases)
 
-const COMMON = /* glsl */ `
+const vertexShader = /* glsl */ `
+varying vec2 vXZ;
+void main() {
+  vec4 world = modelMatrix * vec4(position, 1.0);
+  vXZ = world.xz;
+  gl_Position = projectionMatrix * viewMatrix * world;
+}
+`;
+
+const fragmentShader = /* glsl */ `
 uniform float uTime;
 uniform sampler2D uField;
 uniform vec4 uRect;
 uniform vec3 uDeep;
+uniform vec3 uMid;
 uniform vec3 uShallow;
 uniform vec3 uFoam;
-varying vec3 vWPos;
+uniform vec3 uRipple;
+uniform vec3 uLightPos[${MAX_LIGHTS}];
+uniform vec3 uLightCol[${MAX_LIGHTS}];
+varying vec2 vXZ;
 
-float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float wNoise(vec2 p) {
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) {
   vec2 i = floor(p);
   vec2 f = fract(p);
   vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(wHash(i), wHash(i + vec2(1.0, 0.0)), u.x), mix(wHash(i + vec2(0.0, 1.0)), wHash(i + vec2(1.0, 1.0)), u.x), u.y);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
-float wHeight(vec2 p, float t) {
-  float h = sin(dot(p, vec2(0.8, 0.6)) * 2.6 + t * 0.9) * 0.45;
-  h += sin(dot(p, vec2(-0.55, 0.85)) * 3.9 + t * 1.25) * 0.3;
-  h += sin(dot(p, vec2(0.95, -0.3)) * 6.1 - t * 1.6) * 0.15;
-  h += (wNoise(p * 1.8 + vec2(t * 0.22, t * 0.15)) - 0.5) * 0.9;
-  h += (wNoise(p * 4.6 - vec2(t * 0.35, -t * 0.28)) - 0.5) * 0.4;
-  return h;
+// Trait net et anticrénelé autour de la valeur 0.
+float stroke(float d, float w) {
+  float aa = fwidth(d) * 1.2;
+  return 1.0 - smoothstep(w, w + aa, abs(d));
+}
+
+void main() {
+  vec4 field = texture2D(uField, (vXZ - uRect.xy) / uRect.zw);
+  float shallow = field.r;
+  float dist = field.b * ${FAR.toFixed(1)}; // distance à la falaise la plus proche
+
+  // Aplats : abysses → large → hauts-fonds.
+  float aa = fwidth(shallow) * 1.5;
+  vec3 col = mix(uDeep, uMid, smoothstep(0.3 - aa, 0.3 + aa, shallow));
+  col = mix(col, uShallow, smoothstep(0.68 - aa, 0.68 + aa, shallow));
+  col *= 0.94 + 0.06 * noise(vXZ * 0.4 + uTime * 0.02);
+
+  // Halos chauds des lanternes sur l'eau.
+  for (int i = 0; i < ${MAX_LIGHTS}; i++) {
+    float d = length(vXZ - uLightPos[i].xz);
+    float k = smoothstep(1.1, 0.0, d);
+    col += uLightCol[i] * k * k * 0.16;
+  }
+
+  float nearLand = 1.0 - step(${(FAR - 0.05).toFixed(2)}, dist);
+  // Écume qui épouse le pied des falaises.
+  float wob = (noise(vXZ * 5.0 + uTime * 0.4) - 0.5) * 0.03;
+  float hug = (1.0 - smoothstep(0.045, 0.045 + fwidth(dist) * 1.5, dist + wob)) * nearLand;
+  // Ligne de ressac qui avance et recule.
+  float r1 = 0.2 + 0.06 * sin(uTime * 0.9 + noise(vXZ * 0.7) * 2.5);
+  float line1 = stroke(dist - r1, 0.012) * step(0.32, noise(vXZ * 2.4 + uTime * 0.12)) * nearLand;
+  float r2 = 0.46 + 0.07 * sin(uTime * 0.9 + 1.8 + noise(vXZ * 0.6) * 2.0);
+  float line2 = stroke(dist - r2, 0.009) * step(0.5, noise(vXZ * 1.8 - uTime * 0.1)) * nearLand * 0.55;
+
+  // Vaguelettes : de petits traits incurvés qui naissent et disparaissent.
+  vec2 g = vXZ * 1.1;
+  vec2 cell = floor(g);
+  float h = hash(cell);
+  vec2 c = (vec2(hash(cell + 3.1), hash(cell + 7.7)) - 0.5) * 0.45;
+  vec2 q = fract(g) - 0.5 - c;
+  float along = dot(q, vec2(0.7071, -0.7071));
+  float across = dot(q, vec2(0.7071, 0.7071)) + along * along * 1.6;
+  float ripple = stroke(across, 0.012) * (1.0 - smoothstep(0.11, 0.15, abs(along)));
+  ripple *= smoothstep(0.25, 0.85, sin(uTime * 0.6 + h * 6.2832)) * step(0.4, h);
+  ripple *= smoothstep(0.35, 0.9, dist / ${FAR.toFixed(1)}) + (1.0 - nearLand);
+
+  col = mix(col, uRipple, ripple * 0.7);
+  col = mix(col, uFoam, max(hug, max(line1 * 0.75, line2)));
+  gl_FragColor = vec4(col, 1.0);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
 }
 `;
 
@@ -43,68 +101,28 @@ export function createWater(size) {
   const field = new THREE.DataTexture(data, n, n, THREE.RGBAFormat);
   field.magFilter = THREE.LinearFilter;
   field.minFilter = THREE.LinearFilter;
-  field.wrapS = field.wrapT = THREE.ClampToEdgeWrapping;
   field.needsUpdate = true;
 
   const uniforms = {
     uTime: { value: 0 },
     uField: { value: field },
     uRect: { value: new THREE.Vector4(x0, x0, width, width) },
-    uDeep: { value: new THREE.Color('#040b0d') },
-    uShallow: { value: new THREE.Color('#1a3d3a') },
-    uFoam: { value: new THREE.Color('#8fb7b0') },
+    uDeep: { value: new THREE.Color('#05090b') },
+    uMid: { value: new THREE.Color('#0b181b') },
+    uShallow: { value: new THREE.Color('#132a2a') },
+    uFoam: { value: new THREE.Color('#7d9e98') },
+    uRipple: { value: new THREE.Color('#284744') },
+    uLightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector3()) },
+    uLightCol: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Color(0, 0, 0)) },
   };
-
-  const material = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.3, metalness: 0.0 });
-  material.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, uniforms);
-    shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;')
-      .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', `#include <common>\n${COMMON}`)
-      .replace('#include <color_fragment>', /* glsl */ `
-        #include <color_fragment>
-        vec4 wField = texture2D(uField, (vWPos.xz - uRect.xy) / uRect.zw);
-        float wShallow = wField.r;
-        float wCoast = wField.g;
-        vec3 wBase = mix(uDeep, uShallow, wShallow);
-        wBase *= 0.75 + 0.5 * wNoise(vWPos.xz * 0.9 + uTime * 0.04);
-        diffuseColor.rgb = wBase;
-      `)
-      .replace('#include <normal_fragment_maps>', /* glsl */ `
-        #include <normal_fragment_maps>
-        {
-          vec2 p = vWPos.xz;
-          float e = 0.035;
-          float dx = (wHeight(p + vec2(e, 0.0), uTime) - wHeight(p - vec2(e, 0.0), uTime)) / (2.0 * e);
-          float dz = (wHeight(p + vec2(0.0, e), uTime) - wHeight(p - vec2(0.0, e), uTime)) / (2.0 * e);
-          float calm = 1.0 - 0.6 * wCoast; // l'eau se calme contre la roche
-          vec3 nW = normalize(vec3(-dx * 0.045 * calm, 1.0, -dz * 0.045 * calm));
-          normal = normalize((viewMatrix * vec4(nW, 0.0)).xyz);
-        }
-      `)
-      .replace('#include <emissivemap_fragment>', /* glsl */ `
-        #include <emissivemap_fragment>
-        {
-          float wobble = wNoise(vWPos.xz * 3.0 + uTime * 0.3) * 3.5;
-          float band = 0.5 + 0.5 * sin(wCoast * 16.0 - uTime * 1.4 + wobble);
-          float foam = smoothstep(0.45, 1.0, wCoast) * smoothstep(0.6, 0.95, band);
-          foam += smoothstep(0.88, 1.0, wCoast) * 0.7;
-          foam *= 0.65 + 0.35 * wNoise(vWPos.xz * 9.0 - uTime * 0.5);
-          totalEmissiveRadiance += uFoam * foam * 0.32;
-        }
-      `);
-  };
+  // Couleurs exactes de la palette : pas de compression des tons.
+  const material = new THREE.ShaderMaterial({ uniforms, vertexShader, fragmentShader, toneMapped: false });
 
   const sea = new THREE.Mesh(new THREE.PlaneGeometry(width, width).rotateX(-Math.PI / 2), material);
   sea.position.set(center, WATER_LEVEL, center);
-  // Pas d'ombres portées sur l'eau : la limite de la carte d'ombre de la
-  // lune y dessinerait des bandes.
-  sea.receiveShadow = false;
 
-  // Champ côtier : R = hauts-fonds, G = proximité d'une falaise (écume).
-  // `kind(x, y)` renvoie 'land', 'shallow' ou 'deep' pour une case visible.
+  // Champ côtier : R = hauts-fonds, B = distance au bloc de terre le plus proche.
+  // `kind(x, y)` renvoie 'land', 'shallow' ou 'deep'.
   sea.userData.recolor = (kind) => {
     const kinds = new Map();
     const at = (x, y) => {
@@ -118,28 +136,45 @@ export function createWater(size) {
         const wz = x0 + (j + 0.5) / RES;
         const cx = Math.round(wx);
         const cz = Math.round(wz);
-        let dLand = 9;
+        let dLand = FAR;
         let dShallow = 9;
         for (let dz = -2; dz <= 2; dz++) {
           for (let dx = -2; dx <= 2; dx++) {
             const k = at(cx + dx, cz + dz);
             if (k === 'deep') continue;
-            const d = Math.max(Math.abs(wx - (cx + dx)), Math.abs(wz - (cz + dz))) - 0.5;
+            // Distance à un carré d'une case, coins arrondis.
+            const ex = Math.max(0, Math.abs(wx - (cx + dx)) - 0.5);
+            const ez = Math.max(0, Math.abs(wz - (cz + dz)) - 0.5);
+            const d = Math.hypot(ex, ez);
             if (k === 'land') dLand = Math.min(dLand, d);
             dShallow = Math.min(dShallow, d);
           }
         }
         const o = (j * n + i) * 4;
-        data[o] = 255 * Math.max(0, Math.min(1, 1 - dShallow / 0.9));
-        data[o + 1] = 255 * Math.max(0, Math.min(1, 1 - dLand / 0.55));
-        data[o + 2] = 0;
+        data[o] = 255 * Math.max(0, Math.min(1, 1 - dShallow / 1.1));
+        data[o + 1] = 0;
+        data[o + 2] = 255 * Math.min(1, dLand / FAR);
         data[o + 3] = 255;
       }
     }
     field.needsUpdate = true;
   };
+
   sea.userData.update = (t) => {
     uniforms.uTime.value = t;
+  };
+
+  // Halos des lanternes : les lumières actives du rendu.
+  sea.userData.setLights = (lights) => {
+    for (let i = 0; i < MAX_LIGHTS; i++) {
+      const l = lights[i];
+      if (l && l.intensity > 0) {
+        uniforms.uLightPos.value[i].copy(l.position);
+        uniforms.uLightCol.value[i].copy(l.color).multiplyScalar(Math.min(1.5, l.intensity));
+      } else {
+        uniforms.uLightCol.value[i].setRGB(0, 0, 0);
+      }
+    }
   };
   return sea;
 }

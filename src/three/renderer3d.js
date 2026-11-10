@@ -634,6 +634,7 @@ export class Renderer3D {
       light.distance = e.distance;
       light.intensity = e.intensity * (0.88 + Math.sin(t * 9 + e.seed) * 0.06 + Math.sin(t * 23 + e.seed * 2) * 0.05);
     });
+    this.sea.userData.setLights(this.pool);
   }
 
   updateOverlay(now) {

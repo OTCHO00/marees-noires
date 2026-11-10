@@ -29,7 +29,6 @@ sea.userData.recolor((x, z) => (isLand(x, z) ? 'land' : [...LAND.keys()].some((k
   return Math.max(Math.abs(x - lx), Math.abs(z - lz)) <= 1;
 }) ? 'shallow' : 'deep'));
 scene.add(sea);
-stage.onFrame((t) => sea.userData.update(t));
 
 // Terre et décor.
 let seed = 1;
@@ -104,6 +103,10 @@ for (const [x, z, s] of [[0, 2, 4], [10, 3, 5], [2, 10, 4.5], [9, 10, 5], [5, 0,
 }
 
 stage.onFrame((t) => {
+  sea.userData.update(t);
+  sea.userData.setLights(lights.map(({ light }) => ({
+    position: light.getWorldPosition(new THREE.Vector3()), color: light.color, intensity: light.intensity,
+  })));
   for (const { light, base, seed: s } of lights) {
     light.intensity = base * (0.88 + Math.sin(t * 9 + s) * 0.06 + Math.sin(t * 23 + s * 2) * 0.05);
   }

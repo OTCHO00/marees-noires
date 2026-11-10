@@ -23,6 +23,12 @@ function light(color, intensity, distance, x, y, z) {
   return l;
 }
 
+// Marque une partie comme animée ; `animateParts` la fera bouger.
+function anim(obj, params) {
+  obj.userData.anim = params;
+  return obj;
+}
+
 // Matériau lumineux et translucide (cloche de méduse).
 function jellyMat(color) {
   return mat(color, {
@@ -39,20 +45,26 @@ function acolyte(color, glow) {
   g.add(mesh(new THREE.SphereGeometry(0.03, 6, 4), mat('#2a3532'), -0.025, 0.19, 0.075));
   g.add(mesh(new THREE.SphereGeometry(0.03, 6, 4), mat('#222c2a'), 0.025, 0.19, 0.078));
   // Cloche de méduse à la place de la tête.
+  // La cloche palpite comme une méduse qui nage.
+  const head = anim(new THREE.Group(), { kind: 'breathe', speed: 2.2, amp: 0.07 });
+  head.position.y = 0.34;
   const bell = new THREE.SphereGeometry(0.12, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.55);
-  g.add(mesh(bell, jellyMat(color), 0, 0.34, 0));
-  g.add(mesh(new THREE.SphereGeometry(0.05, 10, 8), glowMat(glow, 2.6), 0, 0.37, 0));
-  for (const dx of [-0.035, 0.035]) g.add(mesh(new THREE.SphereGeometry(0.012, 6, 4), mat('#050909'), dx, 0.38, 0.105));
-  // Filaments qui retombent sur la robe.
+  head.add(mesh(bell, jellyMat(color)));
+  head.add(mesh(new THREE.SphereGeometry(0.05, 10, 8), glowMat(glow, 2.6), 0, 0.03, 0));
+  for (const dx of [-0.035, 0.035]) head.add(mesh(new THREE.SphereGeometry(0.012, 6, 4), mat('#050909'), dx, 0.04, 0.105));
+  g.add(head);
+  // Filaments qui retombent sur la robe et ondulent.
+  const filaments = anim(new THREE.Group(), { kind: 'sway', speed: 1.6, amp: 0.1 });
+  filaments.position.y = 0.35;
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2;
     const x = Math.cos(a) * 0.105;
     const z = Math.sin(a) * 0.105;
-    g.add(tube([[x, 0.35, z], [x * 1.1, 0.28, z * 1.1], [x * 0.95, 0.2, z * 0.95], [x * 1.15, 0.1, z * 1.15]], 0.005, color, 8));
+    const f = tube([[x, 0, z], [x * 1.1, -0.07, z * 1.1], [x * 0.95, -0.15, z * 0.95], [x * 1.15, -0.25, z * 1.15]], 0.005, color, 8);
+    f.material = glowMat(color, 1.1);
+    filaments.add(f);
   }
-  g.traverse((o) => {
-    if (o.isMesh && o.geometry.type === 'TubeGeometry') o.material = glowMat(color, 1.1);
-  });
+  g.add(filaments);
   g.add(light(color, 1.7, 2.2, 0, 0.38, 0.05));
   return g;
 }
@@ -60,7 +72,8 @@ function acolyte(color, glow) {
 // ---------- Guetteur : vigie sur échasses ----------
 
 function guetteur(color, glow) {
-  const g = new THREE.Group();
+  // Il oscille en permanence sur ses échasses, et davantage en marchant.
+  const g = anim(new THREE.Group(), { kind: 'teeter', speed: 1.2, amp: 0.025 });
   for (const sx of [-1, 1]) {
     const stilt = mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.46, 5), mat(sx < 0 ? '#3a2a1c' : C.wood), sx * 0.045, 0.23, 0);
     stilt.rotation.z = sx * 0.05;
@@ -71,7 +84,10 @@ function guetteur(color, glow) {
   g.add(mesh(new THREE.BoxGeometry(0.11, 0.015, 0.015), mat(C.woodDark), 0, 0.22, 0));
   // Manteau court et écharpe qui flotte.
   g.add(mesh(jitter(new THREE.CylinderGeometry(0.065, 0.09, 0.22, 7, 2), 0.006, 5), mat('#26302e'), 0, 0.6, 0));
-  g.add(tube([[0, 0.7, -0.03], [-0.08, 0.7, -0.1], [-0.16, 0.64, -0.12], [-0.22, 0.6, -0.08]], 0.014, '#6e3329', 10));
+  const scarf = anim(new THREE.Group(), { kind: 'flutter', speed: 3.2, amp: 0.35 });
+  scarf.position.set(0, 0.7, -0.03);
+  scarf.add(tube([[0, 0, 0], [-0.08, 0, -0.07], [-0.16, -0.06, -0.09], [-0.22, -0.1, -0.05]], 0.014, '#6e3329', 10));
+  g.add(scarf);
   g.add(tube([[0.06, 0.68, 0], [0.12, 0.6, 0.06], [0.13, 0.52, 0.1]], 0.016, ROBE, 6));
   g.add(tube([[-0.06, 0.68, 0], [-0.1, 0.6, 0.04]], 0.016, '#26302e', 4));
   const spyglass = mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.1, 6), mat('#8f9a94', { metalness: 0.5, roughness: 0.4 }), 0.14, 0.52, 0.14);
@@ -94,7 +110,8 @@ function guetteur(color, glow) {
 // ---------- Harponneur : masque de baleine ----------
 
 function harponneur(color, glow) {
-  const g = new THREE.Group();
+  // Lente respiration d'un corps massif.
+  const g = anim(new THREE.Group(), { kind: 'teeter', speed: 0.9, amp: 0.012 });
   g.add(mesh(jitter(new THREE.CylinderGeometry(0.095, 0.13, 0.3, 7, 2), 0.008, 7), mat('#2c3a2e'), 0, 0.15, 0));
   g.add(mesh(new THREE.BoxGeometry(0.24, 0.035, 0.13), mat('#6b5a3a'), 0, 0.3, 0));
   const chain = mesh(new THREE.TorusGeometry(0.045, 0.01, 4, 12), mat('#8f9a94', { metalness: 0.5, roughness: 0.45 }), -0.12, 0.16, 0.02);
@@ -140,13 +157,20 @@ function gardien(color, glow, seed) {
   const radii = new THREE.Vector3(0.24, 0.17, 0.2);
   const body = jitter(new THREE.SphereGeometry(1, 14, 10), 0.12, seed);
   body.scale(radii.x, radii.y, radii.z);
-  g.add(mesh(body, mat(FLESH), center.x, center.y, center.z));
+  g.add(anim(mesh(body, mat(FLESH), center.x, center.y, center.z), { kind: 'breathe', speed: 1.1, amp: 0.05 }));
   for (const [x, y, z, s] of [[-0.18, 0.08, 0.06, 0.1], [0.17, 0.07, -0.04, 0.11], [0.06, 0.27, -0.08, 0.1], [-0.1, 0.24, 0.02, 0.08]]) {
     g.add(mesh(jitter(new THREE.SphereGeometry(s, 9, 7), s * 0.2, seed + x * 10), mat(r() > 0.5 ? FLESH : FLESH_DARK), x, y, z));
   }
   // Pseudopodes et débris pris dans la masse.
-  g.add(tube([[-0.2, 0.18, 0.02], [-0.32, 0.26, 0.04], [-0.36, 0.36, 0.0], [-0.33, 0.42, -0.04]], 0.022, FLESH, 10));
-  g.add(tube([[0.18, 0.2, -0.05], [0.28, 0.3, -0.1], [0.3, 0.38, -0.18]], 0.02, FLESH_DARK, 8));
+  for (const [at, pts, rad, col] of [
+    [[-0.2, 0.18, 0.02], [[0, 0, 0], [-0.12, 0.08, 0.02], [-0.16, 0.18, -0.02], [-0.13, 0.24, -0.06]], 0.022, FLESH],
+    [[0.18, 0.2, -0.05], [[0, 0, 0], [0.1, 0.1, -0.05], [0.12, 0.18, -0.13]], 0.02, FLESH_DARK],
+  ]) {
+    const pod = anim(new THREE.Group(), { kind: 'sway', speed: 0.9 + r(), amp: 0.2 });
+    pod.position.set(...at);
+    pod.add(tube(pts, rad, col, 10));
+    g.add(pod);
+  }
   const mast = mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.3, 5), mat(C.woodDark), -0.06, 0.34, -0.1);
   mast.rotation.set(-0.4, 0, 0.5);
   g.add(mast);
@@ -158,10 +182,13 @@ function gardien(color, glow, seed) {
     const p = center.clone().add(dir.clone().multiply(radii).multiplyScalar(0.98));
     const size = 0.012 + r() * 0.028;
     const pale = r() > 0.75;
-    const eye = mesh(new THREE.SphereGeometry(size, 8, 6), glowMat(pale ? '#7FD1B9' : color, pale ? 1.4 : 1.8), p.x, p.y, p.z);
+    // Chaque œil cligne à son propre rythme.
+    const eye = anim(new THREE.Group(), { kind: 'blink', speed: 0.12 + r() * 0.22, phase: r() * 10 });
+    eye.position.copy(p);
+    eye.add(mesh(new THREE.SphereGeometry(size, 8, 6), glowMat(pale ? '#7FD1B9' : color, pale ? 1.4 : 1.8)));
+    const q = dir.clone().multiplyScalar(size * 0.75);
+    eye.add(mesh(new THREE.SphereGeometry(size * 0.45, 6, 4), pupil, q.x, q.y, q.z));
     g.add(eye);
-    const q = p.clone().add(dir.clone().multiplyScalar(size * 0.75));
-    g.add(mesh(new THREE.SphereGeometry(size * 0.45, 6, 4), pupil, q.x, q.y, q.z));
   }
   g.add(light(color, 1.4, 1.8, 0, 0.3, 0.3));
   return g;
@@ -178,24 +205,31 @@ function mortier(color, glow) {
   const head = jitter(new THREE.SphereGeometry(1, 14, 10), 0.08, 9);
   head.scale(0.17, 0.15, 0.22);
   g.add(mesh(head, mat(FLESH), 0, 0.22, -0.02));
-  const jaw = jitter(new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), 0.05, 10);
-  jaw.scale(0.16, 0.08, 0.2);
-  g.add(mesh(jaw, mat(FLESH_DARK), 0, 0.13, 0.04));
+  // Mâchoire inférieure qui s'ouvre et se referme lentement.
+  const jaw = anim(new THREE.Group(), { kind: 'jaw', speed: 0.8, amp: 0.2 });
+  jaw.position.set(0, 0.15, -0.12);
+  const jawGeo = jitter(new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), 0.05, 10);
+  jawGeo.scale(0.16, 0.08, 0.2);
+  jaw.add(mesh(jawGeo, mat(FLESH_DARK), 0, -0.02, 0.16));
+  g.add(jaw);
   const maw = new THREE.SphereGeometry(1, 12, 8);
   maw.scale(0.11, 0.07, 0.04);
   g.add(mesh(maw, mat('#050909'), 0, 0.17, 0.19));
   for (let i = 0; i < 7; i++) {
     const a = -0.9 + (i / 6) * 1.8;
     const up = new THREE.ConeGeometry(0.008, 0.04, 3);
-    g.add(mesh(up, mat(BONE), Math.sin(a) * 0.1, 0.13, 0.17 + Math.cos(a) * 0.03));
+    jaw.add(mesh(up, mat(BONE), Math.sin(a) * 0.1, -0.02, 0.29 + Math.cos(a) * 0.03));
     const down = new THREE.ConeGeometry(0.009, 0.045, 3);
     down.rotateX(Math.PI);
     g.add(mesh(down, mat(BONE), Math.sin(a) * 0.1, 0.21, 0.18 + Math.cos(a) * 0.03));
   }
   for (const sx of [-1, 1]) g.add(mesh(new THREE.SphereGeometry(0.018, 6, 4), glowMat(glow, 3), sx * 0.12, 0.26, 0.09));
   // Leurre lumineux au bout d'une tige.
-  g.add(tube([[0, 0.34, -0.06], [0, 0.48, 0.0], [0, 0.5, 0.14], [0, 0.44, 0.24]], 0.01, FLESH, 10));
-  g.add(mesh(new THREE.SphereGeometry(0.035, 10, 8), glowMat(glow, 5), 0, 0.42, 0.25));
+  const lure = anim(new THREE.Group(), { kind: 'sway', speed: 1.3, amp: 0.12 });
+  lure.position.set(0, 0.34, -0.06);
+  lure.add(tube([[0, 0, 0], [0, 0.14, 0.06], [0, 0.16, 0.2], [0, 0.1, 0.3]], 0.01, FLESH, 10));
+  lure.add(mesh(new THREE.SphereGeometry(0.035, 10, 8), glowMat(glow, 5), 0, 0.08, 0.31));
+  g.add(lure);
   // Chaînes et dompteur.
   for (const sx of [-1, 1]) g.add(tube([[sx * 0.14, 0.06, -0.2], [sx * 0.16, 0.2, -0.08], [sx * 0.12, 0.3, 0.02]], 0.007, '#8f9a94', 6));
   const handler = hoodedFigure(color, { height: 0.26, width: 0.075 });
@@ -241,9 +275,12 @@ function barque(color, glow) {
   const punter = hoodedFigure(color, { height: 0.24, width: 0.07 });
   punter.position.set(-0.15, 0.06, 0);
   g.add(punter);
-  const pole = mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.62, 4), mat(C.wood), -0.24, 0.12, 0.05);
+  const push = anim(new THREE.Group(), { kind: 'sway', speed: 1.2, amp: 0.15 });
+  push.position.set(-0.17, 0.2, 0.02);
+  const pole = mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.62, 4), mat(C.wood), -0.07, -0.08, 0.03);
   pole.rotation.set(0.25, 0, 0.4);
-  g.add(pole);
+  push.add(pole);
+  g.add(push);
   return g;
 }
 
@@ -279,7 +316,7 @@ function navire(color, glow, seed) {
     sail.material = mat('#6b5a4a', { side: THREE.DoubleSide });
     sail.rotation.y = Math.PI / 2;
     sail.position.set(x + 0.02, 0.16 + h * 0.55, 0);
-    g.add(sail);
+    g.add(anim(sail, { kind: 'flutter', speed: 1.4, amp: 0.08 }));
   }
   // Lanternes dans la cage thoracique.
   for (const x of [-0.22, 0, 0.22]) g.add(mesh(new THREE.BoxGeometry(0.035, 0.04, 0.035), glowMat(glow, 4), x, 0.1, 0));
@@ -305,4 +342,29 @@ export function vessel(kind, color, seed = 1) {
   g.position.y = WATER_LEVEL - 0.02;
   g.userData.bob = seed;
   return g;
+}
+
+// Anime les parties marquées d'un modèle (après fusion par `bake`).
+// `moving` accentue certains mouvements pendant un déplacement.
+export function animateParts(group, t, moving = false) {
+  for (const a of group.userData.anims ?? []) {
+    const { obj, base } = a;
+    const w = t * a.speed + a.phase;
+    if (a.kind === 'breathe') {
+      const k = Math.sin(w) * a.amp;
+      obj.scale.set(base.s.x * (1 - k * 0.5), base.s.y * (1 + k), base.s.z * (1 - k * 0.5));
+    } else if (a.kind === 'sway') {
+      obj.rotation.x = base.r.x + Math.sin(w) * a.amp;
+      obj.rotation.z = base.r.z + Math.cos(w * 0.8) * a.amp;
+    } else if (a.kind === 'blink') {
+      obj.scale.y = base.s.y * ((w % 1) < 0.05 ? 0.12 : 1);
+    } else if (a.kind === 'teeter') {
+      const amp = moving ? a.amp * 4 : a.amp;
+      obj.rotation.z = base.r.z + Math.sin(t * a.speed * (moving ? 5 : 1) + a.phase) * amp;
+    } else if (a.kind === 'flutter') {
+      obj.rotation.y = base.r.y + Math.sin(w) * a.amp;
+    } else if (a.kind === 'jaw') {
+      obj.rotation.x = base.r.x - (0.5 + 0.5 * Math.sin(w)) * a.amp;
+    }
+  }
 }

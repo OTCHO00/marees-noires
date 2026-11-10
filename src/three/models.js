@@ -420,11 +420,19 @@ export function bake(root) {
   const geos = [];
   const keep = [];
   const lights = [];
-  root.traverse((o) => {
+  const animated = [];
+  const visit = (o) => {
     if (o.isPointLight) {
       lights.push(o);
       return;
     }
+    // Une partie animée reste intacte (avec ses enfants) pour pouvoir bouger.
+    if (o !== root && o.userData.anim) {
+      o.traverse((c) => c.isPointLight && lights.push(c));
+      animated.push([o, new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld)]);
+      return;
+    }
+    o.children.forEach(visit);
     if (!o.isMesh) return;
     const m = o.material;
     const local = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld);
@@ -445,7 +453,8 @@ export function bake(root) {
     }
     if (!g.attributes.normal) g.computeVertexNormals();
     geos.push(g);
-  });
+  };
+  visit(root);
   const out = new THREE.Group();
   if (geos.length) {
     const merged = mergeGeometries(geos);
@@ -455,15 +464,27 @@ export function bake(root) {
     baked.receiveShadow = true;
     out.add(baked);
   }
-  for (const [o, local] of keep) {
+  for (const [o, local] of [...keep, ...animated]) {
     local.decompose(o.position, o.quaternion, o.scale);
     out.add(o);
   }
   out.userData.emitters = lights.map((l) => {
     const p = new THREE.Vector3();
     l.getWorldPosition(p).applyMatrix4(inv);
+    l.removeFromParent();
     return { local: p, color: l.color.clone(), intensity: l.intensity, distance: l.distance };
   });
+  // Parties animées (y compris imbriquées), avec leur pose de repos.
+  out.userData.anims = [];
+  for (const [o] of animated) {
+    o.traverse((c) => {
+      if (!c.userData.anim) return;
+      out.userData.anims.push({
+        obj: c, ...c.userData.anim, phase: c.userData.anim.phase ?? Math.random() * 10,
+        base: { r: c.rotation.clone(), s: c.scale.clone() },
+      });
+    });
+  }
   return out;
 }
 

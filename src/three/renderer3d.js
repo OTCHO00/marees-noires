@@ -356,6 +356,7 @@ export class Renderer3D {
       g.position.set(gx + sx, y, gy - sx);
       g.rotation.y = rec.facing;
       g.rotation.z = u.vessel ? Math.sin(t * 1.1 + u.id) * 0.04 : 0;
+      U.animateParts(g, t, !!anim);
       const vis = this.visible(u.x, u.y);
       g.visible = vis;
       // Plaque de PV.

@@ -8,6 +8,20 @@ import { createWater } from './water.js';
 import * as B from './buildings.js';
 import * as U from './units.js';
 
+// Fusionne un modèle comme le jeu, en gardant ses lumières et ses parties animées.
+const animated = [];
+function prepare(model) {
+  const b = M.bake(model);
+  for (const e of b.userData.emitters) {
+    const l = new THREE.PointLight(e.color, e.intensity, e.distance, 1.8);
+    l.position.copy(e.local);
+    b.add(l);
+  }
+  b.userData.bob = model.userData.bob ?? 0;
+  animated.push(b);
+  return b;
+}
+
 const AMBER = { color: '#E8A33D', light: '#F5C26B' };
 const BLOOD = { color: '#D9604F', light: '#F08A7C' };
 
@@ -74,7 +88,7 @@ const units = [
 ];
 const lights = [];
 units.forEach(([type, x, z, f, rot], i) => {
-  const u = U.unit(type, f.color, i + 3);
+  const u = prepare(U.unit(type, f.color, i + 3));
   u.position.set(x, M.LAND_TOP, z);
   u.rotation.y = rot;
   scene.add(u);
@@ -83,8 +97,8 @@ units.forEach(([type, x, z, f, rot], i) => {
 
 // Navires.
 const ships = [
-  [U.vessel('barque', AMBER.color, 2), 6, 5.2, Math.PI * 1.2],
-  [U.vessel('navire', BLOOD.color, 5), 5.8, 7.5, Math.PI / 4],
+  [prepare(U.vessel('barque', AMBER.color, 2)), 6, 5.2, Math.PI * 1.2],
+  [prepare(U.vessel('navire', BLOOD.color, 5)), 5.8, 7.5, Math.PI / 4],
 ];
 for (const [ship, x, z, rot] of ships) {
   ship.position.x = x;
@@ -105,6 +119,7 @@ for (const [x, z, s] of [[0, 2, 4], [10, 3, 5], [2, 10, 4.5], [9, 10, 5], [5, 0,
 }
 
 stage.onFrame((t) => {
+  for (const a of animated) U.animateParts(a, t);
   sea.userData.update(t);
   sea.userData.setLights(lights.map(({ light }) => ({
     position: light.getWorldPosition(new THREE.Vector3()), color: light.color, intensity: light.intensity,

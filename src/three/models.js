@@ -302,7 +302,7 @@ export function lantern(color, intensity = 1.6) {
   return g;
 }
 
-function hoodedFigure(color, { height = 0.34, width = 0.1 } = {}) {
+export function hoodedFigure(color, { height = 0.34, width = 0.1 } = {}) {
   const g = new THREE.Group();
   const robe = jitter(new THREE.ConeGeometry(width, height, 8, 3), 0.008, 11);
   g.add(mesh(robe, mat(C.robe), 0, height / 2, 0));
@@ -314,66 +314,11 @@ function hoodedFigure(color, { height = 0.34, width = 0.1 } = {}) {
   return g;
 }
 
-function baseRing(color) {
+export function baseRing(color) {
   const ring = new THREE.Mesh(new THREE.RingGeometry(0.19, 0.22, 24), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 }));
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.006;
   return ring;
-}
-
-export function unit(type, color, seed = 1) {
-  const g = new THREE.Group();
-  g.add(baseRing(color));
-  if (type === 'gardien') {
-    const body = jitter(new THREE.SphereGeometry(0.15, 9, 7), 0.02, seed);
-    body.scale(1, 1.3, 0.9);
-    g.add(mesh(body, mat('#0c1210'), 0, 0.2, 0));
-    const head = jitter(new THREE.SphereGeometry(0.1, 9, 7), 0.015, seed + 1);
-    head.scale(1.1, 0.9, 1.2);
-    g.add(mesh(head, mat('#101816'), 0.02, 0.42, 0.06));
-    for (const dx of [-0.045, 0.06]) g.add(mesh(new THREE.SphereGeometry(0.018, 6, 4), glowMat(color, 6), dx, 0.44, 0.165));
-    for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(0.06, 0.006, 0.01), mat('#050808'), -0.13, 0.4 - i * 0.03, 0.05));
-    g.add(tube([[0.14, 0.26, 0.05], [0.26, 0.22, 0.08], [0.24, 0.08, 0.12], [0.18, 0.12, 0.14]], 0.016, C.iron, 10));
-    const light = new THREE.PointLight(color, 0.9, 1.4, 2);
-    light.position.set(0, 0.45, 0.3);
-    g.add(light);
-  } else if (type === 'mortier') {
-    g.add(mesh(jitter(new THREE.CylinderGeometry(0.15, 0.17, 0.1, 7), 0.01, seed), mat(C.stoneDark), 0, 0.05, 0));
-    const barrel = new THREE.CylinderGeometry(0.075, 0.09, 0.22, 10, 1, true);
-    const b = mesh(barrel, mat(C.iron, { metalness: 0.5, roughness: 0.5, side: THREE.DoubleSide }), 0, 0.2, 0.02);
-    b.rotation.x = -0.45;
-    g.add(b);
-    g.add(mesh(new THREE.TorusGeometry(0.16, 0.01, 4, 16), glowMat(color, 3), 0, 0.1, 0).rotateX(Math.PI / 2));
-    const light = new THREE.PointLight(color, 0.8, 1.2, 2);
-    light.position.set(0, 0.15, 0.2);
-    g.add(light);
-  } else {
-    const tall = type === 'guetteur';
-    const fig = hoodedFigure(color, { height: tall ? 0.4 : 0.34, width: tall ? 0.085 : 0.1 });
-    g.add(fig);
-    if (type === 'guetteur') {
-      g.add(tube([[-0.12, 0, 0.02], [-0.12, 0.62, 0.02], [-0.04, 0.64, 0.02]], 0.008, C.wood, 6));
-      const l = lantern(color, 1.8);
-      l.position.set(-0.04, 0.57, 0.02);
-      g.add(l);
-    } else {
-      // Bras tendu et lanterne.
-      g.add(tube([[0.06, 0.25, 0.02], [0.12, 0.2, 0.06], [0.14, 0.17, 0.08]], 0.018, C.robe, 6));
-      const l = lantern(color, 1.6);
-      l.position.set(0.15, 0.12, 0.09);
-      g.add(l);
-      if (type === 'harponneur') {
-        const shaft = mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.62, 5), mat(C.wood), -0.08, 0.32, 0.04);
-        shaft.rotation.z = 0.35;
-        g.add(shaft);
-        const tip = mesh(new THREE.ConeGeometry(0.02, 0.07, 4), mat('#8f9a94', { metalness: 0.6, roughness: 0.35 }), -0.19, 0.62, 0.04);
-        tip.rotation.z = 0.35;
-        g.add(tip);
-      }
-    }
-  }
-  g.position.y = LAND_TOP;
-  return g;
 }
 
 export function hull(len, width, height) {
@@ -388,7 +333,7 @@ export function hull(len, width, height) {
   return mesh(geo, mat(C.wood));
 }
 
-function tatteredSail(w, h, seed) {
+export function tatteredSail(w, h, seed) {
   const geo = new THREE.PlaneGeometry(w, h, 4, 4);
   const pos = geo.attributes.position;
   const r = rng(seed);
@@ -399,40 +344,6 @@ function tatteredSail(w, h, seed) {
   }
   geo.computeVertexNormals();
   return mesh(geo, mat(C.sail, { side: THREE.DoubleSide }));
-}
-
-export function vessel(kind, color, seed = 1) {
-  const g = new THREE.Group();
-  if (kind === 'navire') {
-    g.add(hull(0.78, 0.26, 0.14));
-    g.add(mesh(new THREE.BoxGeometry(0.2, 0.08, 0.24), mat(C.woodDark), -0.26, 0.18, 0));
-    for (const [x, h] of [[-0.08, 0.78], [0.18, 0.62]]) {
-      g.add(mesh(new THREE.CylinderGeometry(0.012, 0.015, h, 5), mat(C.woodDark), x, 0.14 + h / 2, 0));
-      const big = tatteredSail(0.24, h * 0.5, seed + x * 7);
-      big.rotation.y = Math.PI / 2;
-      big.position.set(x + 0.02, 0.14 + h * 0.55, 0);
-      g.add(big);
-    }
-    for (const x of [-0.22, 0, 0.22]) g.add(mesh(new THREE.BoxGeometry(0.03, 0.025, 0.01), glowMat(color, 4), x, 0.1, 0.145));
-    const l = lantern(color, 2.2);
-    l.position.set(0.36, 0.3, 0);
-    g.add(l);
-  } else {
-    g.add(hull(0.46, 0.18, 0.08));
-    g.add(mesh(new THREE.BoxGeometry(0.06, 0.012, 0.18), mat(C.woodDark), 0, 0.085, 0));
-    const fig = hoodedFigure(color, { height: 0.22, width: 0.07 });
-    fig.position.set(-0.04, 0.06, 0);
-    fig.rotation.y = Math.PI / 2;
-    g.add(fig);
-    g.add(tube([[0.03, 0.12, 0.08], [0.1, 0.05, 0.16], [0.16, -0.02, 0.2]], 0.006, C.wood, 4));
-    g.add(mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.32, 4), mat(C.wood), 0.2, 0.22, 0));
-    const l = lantern(color, 1.6);
-    l.position.set(0.2, 0.36, 0);
-    g.add(l);
-  }
-  g.position.y = WATER_LEVEL - 0.02;
-  g.userData.bob = seed;
-  return g;
 }
 
 // Brume : sprite doux généré une fois.

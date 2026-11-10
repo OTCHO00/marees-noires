@@ -6,6 +6,7 @@ import { createStage } from './stage.js';
 import * as M from './models.js';
 import { createWater } from './water.js';
 import * as B from './buildings.js';
+import * as U from './units.js';
 
 const AMBER = { color: '#E8A33D', light: '#F5C26B' };
 const BLOOD = { color: '#D9604F', light: '#F08A7C' };
@@ -69,12 +70,12 @@ const units = [
   ['gardien', 5, 5, AMBER, Math.PI * 0.1],
   ['guetteur', 4, 3, AMBER, Math.PI * 0.6],
   ['acolyte', 8, 7, BLOOD, -Math.PI * 0.75],
+  ['mortier', 4, 5, AMBER, Math.PI * 0.3],
 ];
 const lights = [];
 units.forEach(([type, x, z, f, rot], i) => {
-  const u = M.unit(type, f.color, i + 3);
-  u.position.x = x;
-  u.position.z = z;
+  const u = U.unit(type, f.color, i + 3);
+  u.position.set(x, M.LAND_TOP, z);
   u.rotation.y = rot;
   scene.add(u);
   u.traverse((o) => o.isPointLight && lights.push({ light: o, base: o.intensity, seed: i * 3.1 }));
@@ -82,8 +83,8 @@ units.forEach(([type, x, z, f, rot], i) => {
 
 // Navires.
 const ships = [
-  [M.vessel('barque', AMBER.color, 2), 6, 5.2, Math.PI * 1.2],
-  [M.vessel('navire', BLOOD.color, 5), 5.8, 7.5, Math.PI / 4],
+  [U.vessel('barque', AMBER.color, 2), 6, 5.2, Math.PI * 1.2],
+  [U.vessel('navire', BLOOD.color, 5), 5.8, 7.5, Math.PI / 4],
 ];
 for (const [ship, x, z, rot] of ships) {
   ship.position.x = x;

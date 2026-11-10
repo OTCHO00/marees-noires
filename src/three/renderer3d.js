@@ -8,6 +8,7 @@ import { createStage } from './stage.js';
 import * as M from './models.js';
 import { createWater } from './water.js';
 import * as B from './buildings.js';
+import * as U from './units.js';
 
 const STEP_MS = 170;
 const LIGHT_POOL = 14; // nombre fixe de lumières : évite de recompiler les shaders
@@ -295,7 +296,7 @@ export class Renderer3D {
   buildUnit(u, spent) {
     const f = this.game.faction(u.owner);
     const color = spent ? M.mix(f.color, '#0B1416', 0.6) : f.color;
-    const model = u.vessel ? M.vessel(u.vessel, color, u.id) : M.unit(u.type, color, u.id);
+    const model = u.vessel ? U.vessel(u.vessel, color, u.id) : U.unit(u.type, color, u.id);
     model.position.set(0, 0, 0);
     return this.adopt(M.bake(model), { dim: spent ? 0.2 : 1 });
   }

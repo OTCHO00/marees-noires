@@ -2,11 +2,17 @@
 // falaises, maisons, tours, sanctuaires, fidèles et navires.
 // Une case mesure 1 × 1 ; le dessus d'un bloc de terre est à LAND_TOP.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 export const LAND_TOP = 0.42;
 export const WATER_LEVEL = 0.06;
 
 // ---------- Outils ----------
+
+// Mélange deux couleurs (t = part de b).
+export function mix(a, b, t) {
+  return '#' + new THREE.Color(a).lerp(new THREE.Color(b), t).getHexString();
+}
 
 export function rng(seed) {
   let a = seed >>> 0;
@@ -140,21 +146,26 @@ export function createSea(width, depth, shallowAt) {
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
   const base = Float32Array.from(pos.array);
-  const colors = [];
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(pos.count * 3), 3));
   const deep = new THREE.Color('#0b1d21');
   const shallow = new THREE.Color('#1d4440');
-  for (let i = 0; i < pos.count; i++) {
-    const k = shallowAt(pos.getX(i), pos.getZ(i));
-    const c = deep.clone().lerp(shallow, k);
-    colors.push(c.r, c.g, c.b);
-  }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  const recolor = (fn) => {
+    const col = geo.attributes.color;
+    const c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      c.copy(deep).lerp(shallow, fn(base[i * 3], base[i * 3 + 2]));
+      col.setXYZ(i, c.r, c.g, c.b);
+    }
+    col.needsUpdate = true;
+  };
+  recolor(shallowAt);
   const material = new THREE.MeshStandardMaterial({
     vertexColors: true, roughness: 0.28, metalness: 0.25, flatShading: true,
   });
   const sea = new THREE.Mesh(geo, material);
   sea.receiveShadow = true;
   sea.position.y = WATER_LEVEL;
+  sea.userData.recolor = recolor;
   sea.userData.update = (t) => {
     for (let i = 0; i < pos.count; i++) {
       const x = base[i * 3];
@@ -509,4 +520,110 @@ export function mist(scale = 3, opacity = 0.35) {
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: mistTexture, transparent: true, opacity, depthWrite: false, fog: false }));
   s.scale.set(scale, scale * 0.45, 1);
   return s;
+}
+
+// ---------- Ressources supplémentaires ----------
+
+export function nacre(seed) {
+  const r = rng(seed);
+  const g = new THREE.Group();
+  g.add(mesh(jitter(new THREE.DodecahedronGeometry(0.16, 0), 0.04, seed), mat(C.basaltDark), 0, WATER_LEVEL - 0.08, 0));
+  for (let i = 0; i < 5; i++) {
+    const shell = new THREE.SphereGeometry(0.045, 7, 4, 0, Math.PI * 2, 0, Math.PI / 2);
+    shell.scale(1, 0.45, 0.8);
+    const m = mesh(shell, mat('#c9ddd6', { roughness: 0.35, metalness: 0.3 }), (r() - 0.5) * 0.3, WATER_LEVEL + 0.04, (r() - 0.5) * 0.3);
+    m.rotation.y = r() * Math.PI;
+    g.add(m);
+  }
+  g.add(mesh(new THREE.SphereGeometry(0.018, 6, 4), glowMat('#e9f5f0', 4), 0.02, WATER_LEVEL + 0.06, 0.02));
+  const light = new THREE.PointLight('#7FD1B9', 0.6, 1.2, 2);
+  light.position.set(0, 0.3, 0);
+  g.add(light);
+  return g;
+}
+
+export function epave(seed) {
+  const r = rng(seed);
+  const g = new THREE.Group();
+  const h = hull(0.5, 0.2, 0.1);
+  h.rotation.set(0.35, r() * Math.PI, 0.25);
+  h.position.set(0.12, LAND_TOP - 0.02, 0.1);
+  g.add(h);
+  for (let i = 0; i < 3; i++) {
+    const plank = mesh(new THREE.BoxGeometry(0.22, 0.012, 0.04), mat(C.wood), (r() - 0.5) * 0.6, LAND_TOP + 0.01, (r() - 0.5) * 0.6);
+    plank.rotation.y = r() * Math.PI;
+    g.add(plank);
+  }
+  const mast = mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.4, 5), mat(C.woodDark), -0.12, LAND_TOP + 0.15, -0.1);
+  mast.rotation.z = 0.6;
+  g.add(mast);
+  const l = lantern('#E8A33D', 0.9);
+  l.position.set(-0.22, LAND_TOP + 0.05, -0.1);
+  g.add(l);
+  return g;
+}
+
+// ---------- Fusion ----------
+// Fusionne toutes les pièces opaques d'un modèle en un seul maillage à
+// couleurs de sommets (un seul appel de dessin). Les pièces lumineuses,
+// transparentes, métalliques ou double-face restent séparées, et les
+// lumières ponctuelles deviennent des « émetteurs » gérés par le rendu.
+const bakedMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0, flatShading: true });
+
+export function bake(root) {
+  root.updateMatrixWorld(true);
+  const inv = root.matrixWorld.clone().invert();
+  const geos = [];
+  const keep = [];
+  const lights = [];
+  root.traverse((o) => {
+    if (o.isPointLight) {
+      lights.push(o);
+      return;
+    }
+    if (!o.isMesh) return;
+    const m = o.material;
+    const local = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld);
+    const special = !m.isMeshStandardMaterial || m.transparent || m.side === THREE.DoubleSide
+      || m.metalness > 0 || (m.emissiveIntensity > 0 && m.emissive.getHex() !== 0);
+    if (special) {
+      keep.push([o, local]);
+      return;
+    }
+    const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    g.clearGroups();
+    g.applyMatrix4(local);
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'color'].includes(k)) g.deleteAttribute(k);
+    if (!m.vertexColors || !g.attributes.color) {
+      const arr = new Float32Array(g.attributes.position.count * 3);
+      for (let i = 0; i < arr.length; i += 3) arr.set([m.color.r, m.color.g, m.color.b], i);
+      g.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+    }
+    if (!g.attributes.normal) g.computeVertexNormals();
+    geos.push(g);
+  });
+  const out = new THREE.Group();
+  if (geos.length) {
+    const merged = mergeGeometries(geos);
+    for (const g of geos) g.dispose();
+    const baked = new THREE.Mesh(merged, bakedMaterial);
+    baked.castShadow = true;
+    baked.receiveShadow = true;
+    out.add(baked);
+  }
+  for (const [o, local] of keep) {
+    local.decompose(o.position, o.quaternion, o.scale);
+    out.add(o);
+  }
+  out.userData.emitters = lights.map((l) => {
+    const p = new THREE.Vector3();
+    l.getWorldPosition(p).applyMatrix4(inv);
+    return { local: p, color: l.color.clone(), intensity: l.intensity, distance: l.distance };
+  });
+  return out;
+}
+
+export function disposeGroup(group) {
+  group.traverse((o) => o.isMesh && o.geometry.dispose());
+  group.removeFromParent();
 }

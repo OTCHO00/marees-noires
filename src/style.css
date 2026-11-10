@@ -919,3 +919,99 @@ b {
     width: calc(50% - 4px);
   }
 }
+
+/* ---------- Surcouche 3D : PV, noms des cités, textes flottants ---------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.overlay > div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+}
+
+.plate {
+  --c: var(--accent);
+  min-width: 22px;
+  padding: 1px 5px;
+  text-align: center;
+  font: 600 12px var(--body);
+  color: var(--text-strong);
+  background: rgba(5, 9, 9, 0.88);
+  border: 1px solid var(--c);
+  border-radius: 3px;
+}
+
+.plate.low {
+  color: #F08A7C;
+  border-color: var(--blood);
+}
+
+.plate.spent {
+  color: #8A938F;
+  border-color: #2C4A44;
+}
+
+.clabel {
+  --c: var(--line);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 10px 2px 3px;
+  background: rgba(6, 11, 12, 0.86);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.clabel.sel {
+  border-color: var(--c);
+}
+
+.clabel .lv {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  font: 600 11px var(--body);
+  color: var(--text-strong);
+  border: 1.4px solid var(--c);
+  border-radius: 50%;
+}
+
+.clabel .nm {
+  font: 600 15px var(--title);
+  color: var(--text-strong);
+}
+
+.clabel .nm.neutral {
+  padding-left: 7px;
+  color: var(--text-soft);
+}
+
+.clabel .pips {
+  display: flex;
+  gap: 2px;
+}
+
+.clabel .pips i {
+  width: 6px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(143, 163, 160, 0.3);
+}
+
+.clabel .pips i.on {
+  background: var(--c);
+}
+
+.float {
+  font: 600 20px var(--title);
+  text-shadow: 0 0 6px #000, 0 0 2px #000;
+}

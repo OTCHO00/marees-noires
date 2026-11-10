@@ -5,7 +5,7 @@ Quatre cultes rivaux se disputent un archipel noyé dans la brume, qui s'enfonce
 Seules leurs lanternes percent encore la nuit.
 
 Direction artistique « Lanterne & Brume » : silhouettes noires, basalte et eaux sombres. La seule couleur chaude d'un culte est celle de sa lumière.
-Tous les visuels sont dessinés en code (Canvas 2D isométrique) : aucune image ni dépendance au runtime.
+Rendu 3D vu en isométrique avec [Three.js](https://threejs.org) : chaque case est un vrai bloc de basalte, chaque lanterne une vraie source de lumière. Tous les modèles sont générés en code, sans fichier d'image ni de modèle à charger.
 
 ## Lancer le jeu
 
@@ -56,10 +56,11 @@ src/
 │   ├── game.js      # moteur de règles (déplacements, combat, économie, marée, tours)
 │   ├── ai.js        # IA (générateur : une action par yield, pour l'animer)
 │   └── rng.js       # aléatoire déterministe à graine
-├── render/
-│   ├── iso.js       # projection isométrique et caméra
-│   ├── sprites.js   # tous les visuels, tracés repris de la planche de DA
-│   └── renderer.js  # boucle de rendu, profondeur, lumières, animations
+├── three/
+│   ├── stage.js       # caméra orthographique isométrique, lune, ombres, bloom
+│   ├── models.js      # modèles low-poly générés en code, fusion des géométries
+│   ├── renderer3d.js  # synchronisation avec le jeu, animations, brume, lumières
+│   └── demo.js        # scène d'essai (demo.html)
 ├── ui/
 │   ├── hud.js       # sélection, panneaux, savoirs interdits, messages
 │   └── sigil.js     # sceaux des cultes en SVG
@@ -75,4 +76,5 @@ Le moteur (`core/`) ne touche jamais au DOM : il émet des événements (`move`,
 - Kraken : créature neutre des abysses qui attaque les navires
 - Multijoueur en ligne (serveur Node + WebSocket qui fait tourner `core/` et diffuse les actions)
 - Sauvegarde de partie, sons d'ambiance (ressac, cloches), musique
+- Performances sur de grandes cartes : seules les 14 lumières les plus proches du centre de la vue sont actives
 - L'IA ne tient pas encore compte de la marée

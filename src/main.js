@@ -4,7 +4,7 @@ import './style.css';
 import { Game } from './core/game.js';
 import { aiTurn } from './core/ai.js';
 import { FACTIONS } from './core/data.js';
-import { Renderer } from './render/renderer.js';
+import { Renderer3D } from './three/renderer3d.js';
 import { Hud } from './ui/hud.js';
 import { sigil } from './ui/sigil.js';
 
@@ -71,13 +71,13 @@ function startGame() {
   const players = [{ faction: setup.faction, human: true }, ...others.map((f) => ({ faction: f.id }))];
   const game = new Game({ size: setup.size, players });
   const me = setup.faction;
-  const renderer = new Renderer($('#board'), game, me);
+  const renderer = new Renderer3D($('#board'), game, me);
   const hud = new Hud(game, renderer, me);
   window.marees = { game, renderer, hud }; // pratique pour déboguer dans la console
 
   const capital = game.citiesOf(me)[0];
   renderer.centerOn(capital.x, capital.y, true);
-  renderer.camera.zoom = window.innerWidth < 720 ? 0.7 : 1;
+  renderer.setZoom(window.innerWidth < 720 ? 4.2 : 3.6);
   hud.toast('Ta lanterne est allumée. Explore la brume et rallume les sanctuaires.');
 
   game.on((e) => {
@@ -142,10 +142,10 @@ function bindInput(renderer, hud) {
     canvas.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 1) {
-      drag = { x: e.clientX, y: e.clientY, camX: renderer.camera.x, camY: renderer.camera.y, moved: false };
+      drag = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
     } else if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
-      pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y), zoom: renderer.camera.zoom };
+      pinch = Math.hypot(a.x - b.x, a.y - b.y);
       drag = null;
     }
   });
@@ -155,22 +155,18 @@ function bindInput(renderer, hud) {
     if (pinch && pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       const d = Math.hypot(a.x - b.x, a.y - b.y);
-      const factor = (pinch.zoom * (d / pinch.dist)) / renderer.camera.zoom;
-      renderer.camera.zoomAt(factor, (a.x + b.x) / 2, (a.y + b.y) / 2, renderer.w, renderer.h);
+      renderer.zoomAt(pinch / d, (a.x + b.x) / 2, (a.y + b.y) / 2);
+      pinch = d;
       return;
     }
     if (drag) {
-      const dx = e.clientX - drag.x;
-      const dy = e.clientY - drag.y;
-      if (Math.hypot(dx, dy) > 6) {
+      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 6) {
         drag.moved = true;
         canvas.classList.add('dragging');
       }
-      if (drag.moved) {
-        renderer.camera.target = null;
-        renderer.camera.x = drag.camX - dx / renderer.camera.zoom;
-        renderer.camera.y = drag.camY - dy / renderer.camera.zoom;
-      }
+      if (drag.moved) renderer.panBy(e.clientX - drag.lastX, e.clientY - drag.lastY);
+      drag.lastX = e.clientX;
+      drag.lastY = e.clientY;
       return;
     }
     const t = renderer.pick(e.clientX, e.clientY);
@@ -189,10 +185,11 @@ function bindInput(renderer, hud) {
   };
   canvas.addEventListener('pointerup', release);
   canvas.addEventListener('pointercancel', release);
+  canvas.addEventListener('pointerleave', () => hud.handleHover(null, null, 0, 0));
 
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
-    renderer.camera.zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY, renderer.w, renderer.h);
+    renderer.zoomAt(Math.exp(e.deltaY * 0.0015), e.clientX, e.clientY);
   }, { passive: false });
 
   window.addEventListener('keydown', (e) => {

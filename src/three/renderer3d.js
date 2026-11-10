@@ -7,6 +7,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { createStage } from './stage.js';
 import * as M from './models.js';
 import { createWater } from './water.js';
+import { createFog } from './fog.js';
 import * as B from './buildings.js';
 import * as U from './units.js';
 
@@ -43,8 +44,8 @@ export class Renderer3D {
     this.buildOverlay();
     this.hlGroup = new THREE.Group();
     this.borderGroup = new THREE.Group();
-    this.fogGroup = new THREE.Group();
-    this.scene.add(this.hlGroup, this.borderGroup, this.fogGroup);
+    this.fog = createFog(game.size);
+    this.scene.add(this.hlGroup, this.borderGroup, this.fog);
     this.selectionRing = this.ring(0.37, 0.45, '#E8A33D', 0.9);
     this.hoverRing = this.ring(0.42, 0.45, '#CFE3DC', 0.35);
     this.scene.add(this.selectionRing, this.hoverRing);
@@ -411,40 +412,10 @@ export class Renderer3D {
     }
   }
 
-  // Brume : les cases inexplorées sont recouvertes de nuit, avec des
-  // nappes qui dérivent sur la frontière.
+  // Brume : un voile animé recouvre les cases inexplorées et se retire en
+  // douceur quand elles sont découvertes.
   syncFog() {
-    this.clear(this.fogGroup);
-    const geos = [];
-    this.mists = [];
-    for (const t of this.game.tiles) {
-      if (this.visible(t.x, t.y)) continue;
-      const g = new THREE.PlaneGeometry(1.02, 1.02);
-      g.rotateX(-Math.PI / 2);
-      g.translate(t.x, 0.14, t.y);
-      geos.push(g);
-      const frontier = this.game.around(t.x, t.y).some((n) => this.visible(n.x, n.y));
-      if (frontier && this.mists.length < 70) {
-        const m = M.mist(1.8 + Math.random() * 1.4, 0.3);
-        m.position.set(t.x, 0.45, t.y);
-        m.userData.base = { x: t.x, z: t.y, s: Math.random() * 10 };
-        this.fogGroup.add(m);
-        this.mists.push(m);
-      }
-    }
-    // Les bords de la carte restent noirs.
-    const s = this.game.size;
-    for (const [x, z, w, d] of [[(s - 1) / 2, -3.5, s + 12, 6], [(s - 1) / 2, s + 2.5, s + 12, 6], [-3.5, (s - 1) / 2, 6, s], [s + 2.5, (s - 1) / 2, 6, s]]) {
-      const g = new THREE.PlaneGeometry(w, d);
-      g.rotateX(-Math.PI / 2);
-      g.translate(x, 0.14, z);
-      geos.push(g);
-    }
-    if (geos.length) {
-      const merged = mergeGeometries(geos);
-      geos.forEach((g) => g.dispose());
-      this.fogGroup.add(new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ color: '#05090a', fog: false })));
-    }
+    this.fog.userData.setVisibility((x, y) => this.visible(x, y));
   }
 
   syncHighlights() {
@@ -558,7 +529,7 @@ export class Renderer3D {
     el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%)`;
   }
 
-  update(t) {
+  update(t, dt) {
     const now = performance.now();
     if (this.glide) {
       const v = this.stage.view.target;
@@ -606,12 +577,7 @@ export class Renderer3D {
       p.ball.position.y += Math.sin(k * Math.PI) * 0.6;
       return true;
     });
-    // Mise à jour de la brume.
-    for (const m of this.mists ?? []) {
-      const b = m.userData.base;
-      m.position.x = b.x + Math.sin(t * 0.15 + b.s) * 0.35;
-      m.position.z = b.z + Math.cos(t * 0.12 + b.s) * 0.25;
-    }
+    this.fog.userData.update(t, dt);
     this.assignLights(t);
     this.updateOverlay(now);
   }
@@ -642,6 +608,7 @@ export class Renderer3D {
       light.intensity = e.intensity * (0.88 + Math.sin(t * 9 + e.seed) * 0.06 + Math.sin(t * 23 + e.seed * 2) * 0.05);
     });
     this.sea.userData.setLights(this.pool);
+    this.fog.userData.setLights(this.pool);
   }
 
   updateOverlay(now) {

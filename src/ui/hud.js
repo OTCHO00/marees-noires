@@ -400,7 +400,7 @@ export class Hud {
     const narrow = W < 860;
     const cx = narrow ? W / 2 : (W - 360) / 2;
     const cy = narrow ? H * 0.4 : H / 2 + 16;
-    const rMax = Math.max(140, Math.min(cx - 70, (narrow ? H * 0.36 : H / 2 - 70)));
+    const rMax = Math.max(140, Math.min(cx - 70, (narrow ? H * 0.36 : H / 2 - 110)));
     const RADII = [0, 0.3, 0.52, 0.74, 0.96].map((k) => k * rMax);
     const angle = (b) => ((-90 + b * 72) * Math.PI) / 180;
     const pos = (id) => {
@@ -425,7 +425,14 @@ export class Hud {
     }).join('');
     const sky = $('#techSky');
     sky.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    sky.innerHTML = `${links}${names}<circle cx="${cx}" cy="${cy}" r="40" fill="#1d363d"/>`;
+    // Cercles des paliers et anneau de runes autour du sceau.
+    const rings = RADII.slice(1).map((r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(127,209,185,0.07)" stroke-dasharray="2 7"/>`).join('');
+    const glyphs = 'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜ';
+    const runes = [...glyphs].map((c, i) => {
+      const a = (i / glyphs.length) * Math.PI * 2;
+      return `<text x="${cx + Math.cos(a) * 58}" y="${cy + Math.sin(a) * 58 + 4}" text-anchor="middle" font-size="12" fill="#7FD1B9" fill-opacity="0.55" transform="rotate(${(a * 180) / Math.PI + 90} ${cx + Math.cos(a) * 58} ${cy + Math.sin(a) * 58})">${c}</text>`;
+    }).join('');
+    sky.innerHTML = `${rings}${links}${names}<circle cx="${cx}" cy="${cy}" r="46" fill="#17302f" stroke="rgba(127,209,185,0.35)"/><circle cx="${cx}" cy="${cy}" r="70" fill="none" stroke="rgba(127,209,185,0.18)"/><g class="rune-ring">${runes}</g>`;
 
     const me = g.faction(this.me);
     $('#techStars').innerHTML = `<div style="position:absolute;left:${cx}px;top:${cy}px;transform:translate(-50%,-50%)">${sigil(me, 60)}</div>`

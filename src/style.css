@@ -1,11 +1,14 @@
-/* Marées noires — interface plate et lisible : police ronde et grasse,
-   aplats à coins arrondis, boutons ronds à icône, gros chiffres. */
+/* Marées noires — interface plate et lisible (aplats arrondis, boutons
+   ronds à icône, gros chiffres) habillée d'une touche lovecraftienne :
+   gothique moderne pour les titres, teintes abyssales, ornements discrets. */
 
 :root {
-  --bg: #0b1619;
-  --surface: rgba(17, 33, 38, 0.94);
-  --surface-2: #1d363d;
-  --surface-3: #27454d;
+  --bg: #081214;
+  --surface: rgba(12, 26, 28, 0.95);
+  --surface-2: #17302f;
+  --surface-3: #214140;
+  --eldritch: #7FD1B9;
+  --eldritch-glow: rgba(127, 209, 185, 0.14);
   --line: rgba(255, 255, 255, 0.07);
   --text: #f2f5f3;
   --muted: #93aaa9;
@@ -17,9 +20,10 @@
   --accent: #E8A33D;
   --accent-light: #F5C26B;
   --ink: #1b1306;
-  --font: 'Nunito', system-ui, sans-serif;
+  --font: 'Grenze', Georgia, serif;
+  --font-title: 'Grenze Gotisch', 'Grenze', Georgia, serif;
   --radius: 14px;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 
 * {
@@ -58,7 +62,7 @@ body {
 }
 
 b {
-  font-weight: 900;
+  font-weight: 800;
 }
 
 /* ---------- Boutons ---------- */
@@ -249,7 +253,7 @@ b {
 
 .stat-line small {
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--ok);
 }
 
@@ -302,7 +306,7 @@ b {
   align-items: center;
   padding: 0;
   font-family: var(--font);
-  font-weight: 900;
+  font-weight: 800;
   font-size: 14px;
   color: var(--muted);
   background: none;
@@ -422,7 +426,7 @@ b {
 #panel h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1.1;
 }
 
@@ -437,7 +441,7 @@ b {
 #panel h3 {
   margin: 16px 0 0;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
@@ -564,7 +568,7 @@ b {
   justify-content: space-between;
   align-items: center;
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .recruit .cost {
@@ -648,7 +652,7 @@ b {
   gap: 10px;
   padding: 8px 18px 8px 10px;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 800;
   background: var(--surface);
   border-radius: 999px;
   box-shadow: var(--shadow);
@@ -726,7 +730,7 @@ b {
 .techsky-head h2 {
   margin: 0;
   font-size: 28px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .techsky-head p {
@@ -805,7 +809,7 @@ b {
   display: grid;
   place-items: center;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--ink);
   background: var(--gold);
   border-radius: 999px;
@@ -834,7 +838,7 @@ b {
 
 .branch-name {
   font-family: var(--font);
-  font-weight: 900;
+  font-weight: 800;
   font-size: 15px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -867,7 +871,7 @@ b {
 
 .techsky-card .meta {
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.06em;
   color: var(--c);
 }
@@ -875,7 +879,7 @@ b {
 .techsky-card h3 {
   margin: 2px 0 6px;
   font-size: 26px;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1.1;
 }
 
@@ -938,7 +942,7 @@ b {
 .kicker {
   margin: 0;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent);
@@ -947,7 +951,7 @@ b {
 .menu-main h1 {
   margin: 0;
   font-size: clamp(56px, 7.5vw, 96px);
-  font-weight: 900;
+  font-weight: 800;
   line-height: 0.92;
   letter-spacing: -0.02em;
 }
@@ -976,7 +980,7 @@ b {
   gap: 14px;
   text-align: left;
   font-family: var(--font);
-  font-weight: 900;
+  font-weight: 800;
   font-size: 20px;
   color: var(--text);
   background: var(--surface-2);
@@ -1026,13 +1030,13 @@ b {
 .menu-panel h2 {
   margin: 0 0 4px;
   font-size: 32px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .menu-panel h3 {
   margin: 18px 0 8px;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
@@ -1162,7 +1166,7 @@ b {
 .start-card h1 {
   margin: 0;
   font-size: 44px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .start-card .tagline {
@@ -1190,7 +1194,7 @@ b {
 .scores td:last-child {
   text-align: right;
   font-size: 20px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 /* ---------- Surcouche 3D : PV, noms des cités, textes flottants ---------- */
@@ -1218,7 +1222,7 @@ b {
   display: grid;
   place-items: center;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--ink);
   background: var(--c);
   border-radius: 999px;
@@ -1263,7 +1267,7 @@ b {
   display: grid;
   place-items: center;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--ink);
   background: var(--c);
   border-radius: 50%;
@@ -1271,7 +1275,7 @@ b {
 
 .clabel .nm {
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--text);
 }
 
@@ -1298,7 +1302,7 @@ b {
 
 .float {
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 800;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 0, 0, 0.6);
 }
 
@@ -1391,4 +1395,147 @@ b {
     width: auto;
     transform: none;
   }
+}
+
+
+/* ---------- Touche lovecraftienne ---------- */
+
+/* Titres et grands chiffres en gothique moderne. */
+.menu-main h1,
+.menu-panel h2,
+.start-card h1,
+.techsky-head h2,
+.techsky-card h3,
+#panel h2,
+.stat-line b,
+.reg-top b,
+.stats b,
+.branch-name,
+.clabel .nm,
+.float,
+#banner {
+  font-family: var(--font-title);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.menu-main h1 {
+  font-size: clamp(64px, 8.5vw, 112px);
+  font-weight: 800;
+  line-height: 0.88;
+  color: #eaf2ee;
+  text-shadow: 0 0 28px rgba(127, 209, 185, 0.28), 0 0 2px rgba(127, 209, 185, 0.5);
+}
+
+.kicker {
+  color: var(--eldritch);
+  letter-spacing: 0.32em;
+}
+
+.tagline,
+.gift,
+.techsky-card em {
+  font-style: italic;
+}
+
+/* Panneaux : un voile vert d'abysse et un filet de lueur. */
+.card,
+#panel,
+.menu-panel,
+.techsky-card,
+.start-card,
+#tooltip {
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(127, 209, 185, 0.07), transparent 60%),
+    var(--surface);
+  box-shadow: var(--shadow), inset 0 0 0 1px var(--eldritch-glow);
+}
+
+/* Un œil veille au sommet des grands panneaux. */
+.start-card {
+  position: relative;
+}
+
+.menu-panel::before,
+.techsky-card::before,
+.start-card::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -11px;
+  width: 44px;
+  height: 22px;
+  transform: translateX(-50%);
+  background: no-repeat center / 44px 22px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 22'%3E%3Crect width='44' height='22' rx='11' fill='%23081214'/%3E%3Cpath d='M6 11 Q22 0 38 11 Q22 22 6 11Z' fill='none' stroke='%237FD1B9' stroke-width='1.6'/%3E%3Ccircle cx='22' cy='11' r='3.6' fill='%237FD1B9'/%3E%3C/svg%3E");
+}
+
+/* Séparateur à œil. */
+.eye-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 400px;
+  color: var(--eldritch);
+  opacity: 0.8;
+}
+
+.eye-rule span {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(127, 209, 185, 0.5), transparent);
+}
+
+/* Boutons : une lueur verdâtre au survol. */
+.btn:hover:not(:disabled),
+.menu-btn:hover,
+.round:hover:not(:disabled) .disc,
+.picker button:hover,
+.recruit:hover:not(:disabled) {
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 0 18px rgba(127, 209, 185, 0.22);
+}
+
+.menu-btn {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 23px;
+  letter-spacing: 0.02em;
+}
+
+.menu-btn.primary {
+  font-size: 27px;
+}
+
+.round {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+#panel h3,
+.menu-panel h3,
+.techsky-card .meta,
+.registre-tab {
+  color: var(--eldritch);
+  letter-spacing: 0.14em;
+}
+
+/* Anneau de runes autour du sceau, dans l'arbre des savoirs. */
+.rune-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: runes 60s linear infinite;
+}
+
+@keyframes runes {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.node.available {
+  box-shadow: 0 0 18px -2px var(--c);
+}
+
+.toast {
+  font-weight: 600;
+  font-size: 15px;
 }

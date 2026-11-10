@@ -45,18 +45,37 @@ export const RESOURCES = {
   relique: { name: 'Relique', tech: 'archeologie', cost: 5, pop: 2 },
 };
 
-// L'arbre est organisé en 4 branches (colonnes de l'interface).
+// L'arbre compte 5 branches de 4 rangs ; chaque savoir exige le précédent
+// de sa branche. `branch` sert à l'affichage en constellations.
+export const BRANCHES = [
+  { name: 'La Mer', color: '#7FD1B9' },
+  { name: 'Les Récoltes', color: '#c9b98a' },
+  { name: 'La Guerre', color: '#D9604F' },
+  { name: 'La Lumière', color: '#F5C26B' },
+  { name: 'La Foi', color: '#A99BEF' },
+];
+
 export const TECHS = {
-  plongee: { name: 'Plongée', tier: 1, req: null, branch: 0, desc: 'Récolter les lits de nacre.' },
-  guet: { name: 'Guet', tier: 2, req: 'plongee', branch: 0, desc: 'Débloque le Guetteur.' },
-  pillage: { name: 'Pillage', tier: 1, req: null, branch: 1, desc: 'Fouiller les épaves échouées.' },
-  archeologie: { name: 'Archéologie interdite', tier: 2, req: 'pillage', branch: 1, desc: 'Exhumer les reliques des falaises.' },
-  navigation: { name: 'Navigation', tier: 1, req: null, branch: 2, desc: 'Embarquer depuis une cité vers les hauts-fonds.' },
-  abysses: { name: 'Abysses', tier: 2, req: 'navigation', branch: 2, desc: 'Naviguer au-dessus des eaux profondes.' },
-  navires: { name: 'Navires noirs', tier: 3, req: 'abysses', branch: 2, desc: 'Transformer ses barques en navires de guerre.' },
-  harpons: { name: 'Harpons', tier: 1, req: null, branch: 3, desc: 'Débloque le Harponneur.' },
-  rites: { name: 'Rites des profondeurs', tier: 2, req: 'harpons', branch: 3, desc: 'Débloque le Gardien.' },
-  mortiers: { name: 'Mortiers rituels', tier: 3, req: 'rites', branch: 3, desc: 'Débloque le Mortier rituel.' },
+  navigation: { name: 'Navigation', tier: 1, req: null, branch: 0, desc: 'Prendre la mer en barque depuis une cité.' },
+  abysses: { name: 'Abysses', tier: 2, req: 'navigation', branch: 0, desc: 'Naviguer au-dessus des eaux profondes.', lore: 'Là où la sonde ne touche plus le fond, quelque chose nous écoute.' },
+  navires: { name: 'Navires noirs', tier: 3, req: 'abysses', branch: 0, desc: 'Changer ses barques en vaisseaux-squelettes.' },
+  leviathan: { name: 'Léviathan', tier: 4, req: 'navires', branch: 0, desc: 'Un navire noir surgit des abysses près de ta capitale, offert par ce qui dort en dessous.' },
+  plongee: { name: 'Plongée', tier: 1, req: null, branch: 1, desc: 'Récolter les lits de nacre.' },
+  pillage: { name: 'Pillage', tier: 2, req: 'plongee', branch: 1, desc: 'Fouiller les épaves échouées.' },
+  archeologie: { name: 'Archéologie interdite', tier: 3, req: 'pillage', branch: 1, desc: 'Exhumer les reliques des falaises.', lore: 'Certaines pierres n’ont pas été taillées par des mains humaines.' },
+  digues: { name: 'Digues', tier: 4, req: 'archeologie', branch: 1, desc: 'La marée ne fait plus sombrer les terres de ton territoire.' },
+  harpons: { name: 'Harpons', tier: 1, req: null, branch: 2, desc: 'Débloque le Harponneur.' },
+  rites: { name: 'Rites des profondeurs', tier: 2, req: 'harpons', branch: 2, desc: 'Débloque le Gardien, la masse aux mille yeux.', lore: 'Nous l’avons nourri, il nous protège. Pour l’instant.' },
+  mortiers: { name: 'Gueules des abysses', tier: 3, req: 'rites', branch: 2, desc: 'Débloque la Gueule-canon.' },
+  chant: { name: 'Chant de la Masse', tier: 4, req: 'mortiers', branch: 2, desc: '+1 attaque aux unités qui combattent à côté d’un Gardien.' },
+  guet: { name: 'Guet', tier: 1, req: null, branch: 3, desc: 'Débloque le Guetteur sur échasses.', lore: 'Plus haut que la brume, plus loin que la peur.' },
+  phares: { name: 'Phares', tier: 2, req: 'guet', branch: 3, desc: 'Tes cités percent la brume jusqu’à 3 cases.' },
+  sourdes: { name: 'Lanternes sourdes', tier: 3, req: 'phares', branch: 3, desc: 'Tes unités sont invisibles à l’ennemi, sauf au contact.' },
+  oeil: { name: 'Œil de la marée', tier: 4, req: 'sourdes', branch: 3, desc: 'Révèle toute la carte.' },
+  liturgie: { name: 'Liturgie', tier: 1, req: null, branch: 4, desc: '+1 huile par tour pour chaque capitale.' },
+  processions: { name: 'Processions', tier: 2, req: 'liturgie', branch: 4, desc: 'Veiller soigne 2 PV de plus.', lore: 'Ils marchent en chantant vers la mer, et la mer les guérit.' },
+  sacrifice: { name: 'Sacrifice', tier: 3, req: 'processions', branch: 4, desc: 'Sacrifier un fidèle qui n’a pas agi rapporte 5 huile.' },
+  eveil: { name: 'Éveil du Dormeur', tier: 4, req: 'sacrifice', branch: 4, cost: 20, desc: 'Victoire immédiate : réveiller ce qui dort sous l’archipel.' },
 };
 
 export const CITY_NAMES = [

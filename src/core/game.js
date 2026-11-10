@@ -3,7 +3,7 @@ import { generateMap, chebyshev } from './map.js';
 import { FACTIONS, UNITS, VESSELS, RESOURCES, TECHS, CITY_NAMES, RULES } from './data.js';
 import { createRng } from './rng.js';
 
-const TECH_BASE_COST = [0, 4, 6, 9];
+const TECH_BASE_COST = [0, 4, 6, 9, 14];
 
 export class Game {
   constructor({ size = 16, players = [{ faction: 0, human: true }, { faction: 1 }], seed, sandbox = false } = {}) {
@@ -142,7 +142,8 @@ export class Game {
   }
 
   income(fid) {
-    return this.citiesOf(fid).reduce((sum, c) => sum + c.level + (c.capital ? 1 : 0), 0);
+    const liturgy = this.hasTech(fid, 'liturgie') ? 1 : 0;
+    return this.citiesOf(fid).reduce((sum, c) => sum + c.level + (c.capital ? 1 + liturgy : 0), 0);
   }
 
   addPop(city, amount) {
@@ -270,21 +271,34 @@ export class Game {
     return 1;
   }
 
+  // Une unité ennemie se voit si sa case est explorée, sauf si son culte
+  // maîtrise les Lanternes sourdes : il faut alors être à son contact.
+  unitVisibleTo(fid, u) {
+    if (u.owner === fid) return true;
+    if (!this.isExplored(fid, u.x, u.y)) return false;
+    if (!this.hasTech(u.owner, 'sourdes')) return true;
+    return this.unitsOf(fid).some((o) => chebyshev(o, u) <= 1) || this.citiesOf(fid).some((c) => chebyshev(c, u) <= 1);
+  }
+
   attackTargets(u) {
     if (u.attacked) return [];
     const { range } = this.stats(u);
     return this.units.filter((o) =>
-      o.owner !== u.owner && chebyshev(u, o) <= range && this.isExplored(u.owner, o.x, o.y));
+      o.owner !== u.owner && chebyshev(u, o) <= range && this.unitVisibleTo(u.owner, o));
   }
 
   // Formule inspirée de Polytopia : la force dépend des PV restants.
   previewCombat(att, def) {
     const as = this.stats(att);
     const ds = this.stats(def);
-    const aForce = as.atk * (att.hp / as.maxHp);
+    // Chant de la Masse : +1 attaque à côté d'un Gardien allié.
+    const chant = this.hasTech(att.owner, 'chant')
+      && this.units.some((o) => o !== att && o.owner === att.owner && o.type === 'gardien' && !o.vessel && chebyshev(o, att) <= 1);
+    const atk = as.atk + (chant ? 1 : 0);
+    const aForce = atk * (att.hp / as.maxHp);
     const dForce = ds.def * (def.hp / ds.maxHp) * this.defenseBonus(def);
     const total = aForce + dForce || 1;
-    const damage = Math.round((aForce / total) * as.atk * RULES.combatScale);
+    const damage = Math.round((aForce / total) * atk * RULES.combatScale);
     let retaliation = 0;
     if (def.hp - damage > 0 && chebyshev(att, def) <= ds.range) {
       retaliation = Math.round((dForce / total) * ds.def * RULES.combatScale);
@@ -402,7 +416,8 @@ export class Game {
 
   techCost(fid, tech) {
     const tier = TECHS[tech].tier;
-    return TECH_BASE_COST[tier] + Math.max(0, this.citiesOf(fid).length - 1) * tier;
+    const base = TECHS[tech].cost ?? TECH_BASE_COST[tier];
+    return base + Math.max(0, this.citiesOf(fid).length - 1) * tier;
   }
 
   researchError(fid, tech) {
@@ -420,6 +435,42 @@ export class Game {
     this.spend(f, this.techCost(f.id, tech));
     f.techs.add(tech);
     this.emit({ type: 'research', faction: f, tech });
+    this.applyTech(f, tech);
+    return true;
+  }
+
+  // Effets immédiats de certains savoirs.
+  applyTech(f, tech) {
+    if (tech === 'oeil') {
+      this.tiles.forEach((_, i) => f.explored.add(i));
+    } else if (tech === 'phares') {
+      for (const c of this.citiesOf(f.id)) this.reveal(f.id, c.x, c.y, 3);
+    } else if (tech === 'leviathan') {
+      const home = this.citiesOf(f.id).find((c) => c.capital) ?? this.citiesOf(f.id)[0];
+      const spot = home && this.around(home.x, home.y, 2).find((t) => t.terrain !== 'land' && !this.unitAt(t.x, t.y));
+      if (spot) {
+        const u = this.spawnUnit('gardien', home);
+        u.x = spot.x;
+        u.y = spot.y;
+        u.vessel = 'navire';
+        this.reveal(f.id, spot.x, spot.y, 2);
+        this.emit({ type: 'train', unit: u, city: { x: spot.x, y: spot.y } });
+      }
+    } else if (tech === 'eveil') {
+      this.result = { winner: f.id, reason: 'awakening' };
+      this.emit({ type: 'gameover', result: this.result });
+    }
+  }
+
+  canSacrifice(u) {
+    return this.hasTech(u.owner, 'sacrifice') && !u.moved && !u.attacked;
+  }
+
+  // Sacrifice : le fidèle disparaît, son culte gagne 5 huile.
+  sacrifice(u) {
+    if (u.owner !== this.current.id || !this.canSacrifice(u)) return false;
+    this.faction(u.owner).stars += 5;
+    this.kill(u);
     return true;
   }
 
@@ -469,7 +520,8 @@ export class Game {
 
   heal(u) {
     if (u.owner !== this.current.id || !this.canHeal(u)) return false;
-    const amount = this.tile(u.x, u.y).owner === u.owner ? RULES.healOwn : RULES.healAway;
+    const amount = (this.tile(u.x, u.y).owner === u.owner ? RULES.healOwn : RULES.healAway)
+      + (this.hasTech(u.owner, 'processions') ? 2 : 0);
     const before = u.hp;
     u.hp = Math.min(this.stats(u).maxHp, u.hp + amount);
     u.moved = true;
@@ -482,6 +534,7 @@ export class Game {
 
   beginTurn(f, { income = true } = {}) {
     if (income) f.stars += this.income(f.id);
+    if (this.hasTech(f.id, 'phares')) for (const c of this.citiesOf(f.id)) this.reveal(f.id, c.x, c.y, 3);
     for (const u of this.unitsOf(f.id)) {
       u.moved = false;
       u.attacked = false;
@@ -530,7 +583,8 @@ export class Game {
       }
     }
     const candidates = this.rng.shuffle(this.tiles.filter((t) =>
-      t.terrain === 'land' && !t.sink && t.city == null && this.around(t.x, t.y).some((n) => n.terrain !== 'land')));
+      t.terrain === 'land' && !t.sink && t.city == null && !(t.owner != null && this.hasTech(t.owner, 'digues'))
+      && this.around(t.x, t.y).some((n) => n.terrain !== 'land')));
     const started = candidates.slice(0, Math.max(1, Math.round(this.size / 8)));
     for (const t of started) t.sink = 1;
     this.emit({ type: 'tide', started, submerged });

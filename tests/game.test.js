@@ -95,3 +95,36 @@ test('le bac à sable révèle la carte et rend tout gratuit', () => {
   assert.ok(g.train(cap, 'harponneur'));
   assert.equal(me.stars, 9999);
 });
+
+test('les savoirs de la Foi et de la Lumière ont un effet', () => {
+  const g = new Game({ size: 16, players, seed: 12 });
+  const f = g.current;
+  f.stars = 200;
+  const before = g.income(f.id);
+  assert.ok(g.research('liturgie'));
+  assert.equal(g.income(f.id), before + 1);
+  for (const t of ['guet', 'phares', 'sourdes', 'oeil']) assert.ok(g.research(t), t);
+  assert.equal(f.explored.size, 16 * 16);
+});
+
+test('le sacrifice rapporte de l’huile et l’Éveil fait gagner', () => {
+  const g = new Game({ size: 16, players, seed: 13 });
+  const f = g.current;
+  f.stars = 500;
+  for (const t of ['liturgie', 'processions', 'sacrifice']) assert.ok(g.research(t), t);
+  const u = g.unitsOf(f.id)[0];
+  u.moved = false;
+  u.attacked = false;
+  const stars = f.stars;
+  assert.ok(g.sacrifice(u));
+  assert.equal(f.stars, stars + 5);
+  assert.ok(g.research('eveil'));
+  assert.deepEqual(g.result, { winner: f.id, reason: 'awakening' });
+});
+
+test('les digues protègent le territoire de la marée', () => {
+  const g = new Game({ size: 16, players, seed: 9 });
+  for (const f of g.factions) f.techs.add('digues');
+  for (let i = 0; i < 4; i++) g.tide();
+  assert.ok(g.tiles.every((t) => !(t.sink && t.owner != null)));
+});

@@ -4,8 +4,8 @@ import { chebyshev } from './map.js';
 import { UNITS } from './data.js';
 
 const RESEARCH_ORDER = [
-  'pillage', 'plongee', 'navigation', 'harpons', 'rites', 'abysses',
-  'archeologie', 'guet', 'navires', 'mortiers',
+  'plongee', 'pillage', 'navigation', 'harpons', 'liturgie', 'rites', 'guet', 'abysses', 'archeologie',
+  'processions', 'phares', 'mortiers', 'navires', 'chant', 'digues', 'sourdes', 'sacrifice', 'leviathan', 'oeil', 'eveil',
 ];
 
 export function* aiTurn(game) {
@@ -107,7 +107,7 @@ function chooseDestination(game, u) {
   const explored = (t) => game.isExplored(fid, t.x, t.y);
 
   let targets = game.cities.filter((c) => c.owner !== fid && explored(c));
-  const enemies = game.units.filter((o) => o.owner !== fid && explored(o));
+  const enemies = game.units.filter((o) => o.owner !== fid && game.unitVisibleTo(fid, o));
   const ownCities = game.citiesOf(fid);
   const raiders = enemies.filter((e) => ownCities.some((c) => chebyshev(c, e) <= 2));
   targets = [...targets, ...raiders];

@@ -6,8 +6,11 @@ import { createRng } from './rng.js';
 const TECH_BASE_COST = [0, 4, 6, 9];
 
 export class Game {
-  constructor({ size = 16, players = [{ faction: 0, human: true }, { faction: 1 }], seed } = {}) {
+  constructor({ size = 16, players = [{ faction: 0, human: true }, { faction: 1 }], seed, sandbox = false } = {}) {
     this.seed = seed ?? Math.floor(Math.random() * 1e9);
+    // Bac à sable : le joueur humain voit toute la carte, ne paie rien et
+    // n'a pas de limite de fidèles par cité. Pratique pour tester.
+    this.sandbox = sandbox;
     this.rng = createRng(this.seed ^ 0x9e3779b9);
     const map = generateMap({ size, factions: players.length, seed: this.seed });
     this.size = size;
@@ -39,6 +42,12 @@ export class Game {
       this.reveal(f.id, pos.x, pos.y, 2);
     });
     map.villages.forEach((pos) => this.createCity(pos.x, pos.y, null, false));
+    if (sandbox) {
+      for (const f of this.factions.filter((x) => x.human)) {
+        f.stars = 9999;
+        this.tiles.forEach((_, i) => f.explored.add(i));
+      }
+    }
     this.beginTurn(this.current, { income: false });
   }
 
@@ -360,6 +369,14 @@ export class Game {
 
   // ---------- Économie ----------
 
+  isFree(f) {
+    return this.sandbox && f.human;
+  }
+
+  spend(f, cost) {
+    if (!this.isFree(f)) f.stars -= cost;
+  }
+
   unitCount(city) {
     return this.units.filter((u) => u.home === city.id).length;
   }
@@ -370,14 +387,14 @@ export class Game {
     if (!f || f !== this.current) return "Cette cité ne t'appartient pas.";
     if (def.tech && !f.techs.has(def.tech)) return `Nécessite ${TECHS[def.tech].name}.`;
     if (this.unitAt(city.x, city.y)) return 'La cité est occupée.';
-    if (this.unitCount(city) >= city.level + 1) return 'Plus de fidèles disponibles : fais grandir la cité.';
+    if (!this.isFree(f) && this.unitCount(city) >= city.level + 1) return 'Plus de fidèles disponibles : fais grandir la cité.';
     if (f.stars < def.cost) return 'Pas assez d’huile.';
     return null;
   }
 
   train(city, type) {
     if (this.result || this.trainError(city, type)) return null;
-    this.current.stars -= UNITS[type].cost;
+    this.spend(this.current, UNITS[type].cost);
     const unit = this.spawnUnit(type, city);
     this.emit({ type: 'train', unit, city });
     return unit;
@@ -400,7 +417,7 @@ export class Game {
   research(tech) {
     const f = this.current;
     if (this.result || this.researchError(f.id, tech)) return false;
-    f.stars -= this.techCost(f.id, tech);
+    this.spend(f, this.techCost(f.id, tech));
     f.techs.add(tech);
     this.emit({ type: 'research', faction: f, tech });
     return true;
@@ -421,7 +438,7 @@ export class Game {
     if (this.result || this.harvestError(x, y)) return false;
     const t = this.tile(x, y);
     const res = RESOURCES[t.resource];
-    this.current.stars -= res.cost;
+    this.spend(this.current, res.cost);
     t.resource = null;
     const city = this.city(t.region);
     this.emit({ type: 'harvest', x, y, city });
@@ -440,7 +457,7 @@ export class Game {
 
   upgradeShip(u) {
     if (u.owner !== this.current.id || this.upgradeError(u)) return false;
-    this.current.stars -= VESSELS.navire.cost;
+    this.spend(this.current, VESSELS.navire.cost);
     u.vessel = 'navire';
     this.emit({ type: 'upgrade', unit: u });
     return true;

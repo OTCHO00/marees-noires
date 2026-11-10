@@ -135,7 +135,7 @@ export class Hud {
   refresh() {
     const g = this.game;
     const f = g.faction(this.me);
-    $('#stars').textContent = f.stars;
+    $('#stars').textContent = g.isFree(f) ? '∞' : f.stars;
     $('#income').textContent = `+${g.income(this.me)} / tour`;
     $('#turn').textContent = g.turn;
     const n = g.tidesIn();

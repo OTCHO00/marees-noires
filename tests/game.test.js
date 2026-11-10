@@ -84,3 +84,14 @@ test('une unité sur une île engloutie embarque en barque', () => {
   g.submerge(t);
   assert.equal(u.vessel, 'barque');
 });
+
+test('le bac à sable révèle la carte et rend tout gratuit', () => {
+  const g = new Game({ size: 16, players, seed: 4, sandbox: true });
+  const me = g.current;
+  assert.equal(me.explored.size, 16 * 16);
+  const cap = g.citiesOf(me.id)[0];
+  g.unitAt(cap.x, cap.y).x += 1; // libère la cité
+  assert.ok(g.research('harpons'));
+  assert.ok(g.train(cap, 'harponneur'));
+  assert.equal(me.stars, 9999);
+});

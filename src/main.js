@@ -69,7 +69,7 @@ $('#restartBtn').onclick = () => location.reload();
 function startGame() {
   const others = FACTIONS.filter((f) => f.id !== setup.faction).slice(0, setup.rivals);
   const players = [{ faction: setup.faction, human: true }, ...others.map((f) => ({ faction: f.id }))];
-  const game = new Game({ size: setup.size, players });
+  const game = new Game({ size: setup.size, players, sandbox: $('#sandbox').checked });
   const me = setup.faction;
   const renderer = new Renderer3D($('#board'), game, me);
   const hud = new Hud(game, renderer, me);

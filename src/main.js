@@ -6,6 +6,7 @@ import { aiTurn } from './core/ai.js';
 import { FACTIONS } from './core/data.js';
 import { Renderer } from './render/renderer.js';
 import { Hud } from './ui/hud.js';
+import { sigil } from './ui/sigil.js';
 
 const $ = (sel) => document.querySelector(sel);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -26,6 +27,7 @@ function picker(el, items, isActive, onPick) {
     items.forEach((item) => {
       const b = document.createElement('button');
       b.innerHTML = item.html;
+      if (item.color) b.style.setProperty('--pick', item.color);
       b.classList.toggle('active', isActive(item));
       b.onclick = () => {
         onPick(item);
@@ -39,13 +41,13 @@ function picker(el, items, isActive, onPick) {
 
 picker(
   $('#factionPicker'),
-  FACTIONS.map((f) => ({ id: f.id, html: `<span class="flag" style="background:${f.color}"></span>${f.name}` })),
+  FACTIONS.map((f) => ({ id: f.id, color: f.color, html: `${sigil(f, 44)}${f.name}` })),
   (i) => i.id === setup.faction,
   (i) => (setup.faction = i.id),
 );
 picker(
   $('#rivalPicker'),
-  [1, 2, 3].map((n) => ({ n, html: `${n} rival${n > 1 ? 's' : ''}` })),
+  [1, 2, 3].map((n) => ({ n, html: `${n} culte${n > 1 ? 's' : ''}` })),
   (i) => i.n === setup.rivals,
   (i) => (setup.rivals = i.n),
 );
@@ -75,8 +77,8 @@ function startGame() {
 
   const capital = game.citiesOf(me)[0];
   renderer.centerOn(capital.x, capital.y, true);
-  renderer.camera.zoom = window.innerWidth < 720 ? 0.85 : 1.25;
-  hud.toast('Bienvenue, capitaine ! Explore les îles et capture les repaires.');
+  renderer.camera.zoom = window.innerWidth < 720 ? 0.7 : 1;
+  hud.toast('Ta lanterne est allumée. Explore la brume et rallume les sanctuaires.');
 
   game.on((e) => {
     if (e.type === 'gameover') setTimeout(() => showEnd(game, me), 900);
@@ -95,7 +97,7 @@ async function runAI(game, renderer, hud) {
   hud.lock(true);
   while (!game.result && !game.current.human) {
     const f = game.current;
-    hud.banner(`Tour des ${f.name}…`, f.color);
+    hud.banner(f);
     for (const step of aiTurn(game)) {
       const pos = step.unit ?? step.city ?? (step.x != null ? step : null);
       if (pos && renderer.visible(pos.x, pos.y)) {
@@ -108,22 +110,22 @@ async function runAI(game, renderer, hud) {
   }
   hud.banner(null);
   hud.lock(false);
-  if (!game.result) hud.toast(`Tour ${game.turn} — à toi de jouer !`);
+  if (!game.result) hud.toast(`Tour ${game.turn} : les feux se rallument.`);
 }
 
 function showEnd(game, me) {
   const r = game.result;
   const won = r.winner === me;
-  $('#endTitle').textContent = won ? 'Victoire !' : 'Défaite…';
+  $('#endTitle').textContent = won ? 'Ta flamme demeure' : 'Ta flamme s’éteint';
   const winner = r.winner != null ? game.faction(r.winner) : null;
   $('#endReason').textContent = r.reason === 'conquest'
-    ? (won ? 'Toutes les mers sont à toi. Le rhum coulera à flots !' : `${winner.name} règnent sur l'archipel.`)
+    ? (won ? 'Tous les autres feux se sont éteints. L’archipel n’obéit plus qu’à toi.' : `${winner.name} règnent seuls sur l’archipel.`)
     : r.reason === 'score'
-      ? (won ? 'Après 30 tours, ta légende surpasse toutes les autres.' : `Au bout de 30 tours, ${winner.name} l'emportent au score.`)
-      : 'Ta dernière cité est tombée. Ton pavillon sombre dans les flots.';
+      ? (won ? 'Après trente marées, ton culte brille plus fort que tous les autres.' : `Après trente marées, ${winner.name} l’emportent.`)
+      : 'Ta dernière cité est tombée. La brume a tout recouvert.';
   $('#scoreTable').innerHTML = [...game.factions]
     .sort((a, b) => game.score(b.id) - game.score(a.id))
-    .map((f) => `<tr><td><span class="flag" style="background:${f.color};display:inline-block;vertical-align:middle;margin-right:8px"></span>${f.name}${f.alive ? '' : ' ☠'}</td><td>${game.score(f.id)}</td></tr>`)
+    .map((f) => `<tr><td>${sigil(f, 26)}${f.name}${f.alive ? '' : ' · éteint'}</td><td>${game.score(f.id)}</td></tr>`)
     .join('');
   $('#endScreen').classList.remove('hidden');
 }

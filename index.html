@@ -3,51 +3,65 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Archipel — La Guerre des Pavillons</title>
-    <meta name="description" content="Jeu de stratégie au tour par tour sur un archipel pirate." />
+    <title>Marées noires</title>
+    <meta name="description" content="Jeu de stratégie au tour par tour : des cultes rivaux se disputent un archipel qui s'enfonce dans la mer." />
+    <meta name="theme-color" content="#0B1416" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Pirata+One&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;600&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
   </head>
   <body>
     <canvas id="board"></canvas>
 
     <header id="topbar" class="hidden">
-      <div class="brand">Archipel</div>
-      <div class="chip" id="factionChip"><span class="flag"></span><span id="factionName"></span></div>
-      <div class="stat" title="Doublons (et revenu par tour)"><span class="coin"></span><b id="stars">0</b><small id="income"></small></div>
-      <div class="stat">Tour <b id="turn">1</b><small id="maxTurns"></small></div>
-      <div class="stat" title="Score">☠ <b id="score">0</b></div>
-      <div class="spacer"></div>
-      <button id="techBtn" class="btn" title="Technologies (T)">📜 <span class="label">Technologies</span></button>
-      <button id="endTurnBtn" class="btn btn-gold" title="Fin du tour (Entrée)">Fin du tour ⚓</button>
+      <div id="factionSigil" class="topsigil"></div>
+      <p id="factionName" class="faction-name"></p>
+      <span class="sep"></span>
+      <div class="stat" title="Huile : la ressource des cultes">
+        <span class="label">Huile</span><b id="stars">0</b><small id="income"></small>
+      </div>
+      <div class="stat">
+        <span class="label">Tour</span><b id="turn">1</b><small>/ 30</small>
+      </div>
+      <div id="tideChip" class="tide" title="Toutes les 3 tours, des côtes commencent à sombrer">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M2 14 q5 -4 10 0 t10 0 M2 19 q5 -4 10 0 t10 0" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M12 3 L12 10 M9 7 L12 10 L15 7" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
+        <span id="tide"></span>
+      </div>
+      <div class="stat score" title="Score">
+        <span class="label">Score</span><b id="score">0</b>
+      </div>
+      <span class="spacer"></span>
+      <button id="techBtn" class="btn" title="Savoirs interdits (T)">Savoirs <span class="label-long">interdits</span></button>
+      <button id="endTurnBtn" class="btn btn-accent" title="Fin du tour (Entrée)">Éteindre les feux</button>
     </header>
 
-    <aside id="panel" class="parchment hidden"></aside>
+    <aside id="panel" class="hidden"></aside>
     <div id="tooltip" class="hidden"></div>
     <div id="toasts"></div>
     <div id="banner" class="hidden"></div>
 
     <div id="techModal" class="modal hidden">
-      <div class="parchment modal-card">
-        <button class="close" data-close>✕</button>
-        <h2>Savoirs des Sept Mers</h2>
-        <p class="sub">Dépense tes doublons pour apprendre de nouvelles techniques. Le coût augmente avec le nombre de ports.</p>
+      <div class="modal-card">
+        <button class="close" data-close aria-label="Fermer">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" stroke-width="1.8" /></svg>
+        </button>
+        <h2>Savoirs interdits</h2>
+        <p class="sub">Brûle ton huile pour apprendre ce que la mer a oublié. Chaque cité de plus rend le savoir plus cher.</p>
         <div id="techTree" class="tech-tree"></div>
       </div>
     </div>
 
     <section id="startScreen" class="screen">
-      <div class="waves"></div>
-      <div class="parchment start-card">
-        <h1>Archipel</h1>
-        <p class="tagline">La Guerre des Pavillons</p>
-        <h3>Choisis ton pavillon</h3>
+      <div class="start-card">
+        <p class="kicker">Un jeu de stratégie au tour par tour</p>
+        <h1>Marées noires</h1>
+        <p class="tagline">L'archipel s'enfonce. Seuls les feux des cultes percent encore la brume.</p>
+        <h3>Choisis ton culte</h3>
         <div id="factionPicker" class="picker factions"></div>
         <div class="row">
           <div>
-            <h3>Rivaux</h3>
+            <h3>Cultes rivaux</h3>
             <div id="rivalPicker" class="picker small"></div>
           </div>
           <div>
@@ -55,28 +69,29 @@
             <div id="sizePicker" class="picker small"></div>
           </div>
         </div>
-        <button id="startBtn" class="btn btn-gold big">Lever l'ancre !</button>
+        <button id="startBtn" class="btn btn-accent big">Allumer la première lanterne</button>
         <details class="rules">
-          <summary>Comment jouer ?</summary>
+          <summary>Comment jouer</summary>
           <ul>
-            <li><b>Explore</b> l'archipel avec tes pirates et dissipe la brume.</li>
-            <li><b>Capture</b> les repaires : reste un tour sur le repaire, puis clique sur « Capturer ».</li>
-            <li><b>Récolte</b> poissons, cocotiers et or dans ton territoire pour faire grandir tes ports.</li>
-            <li><b>Recrute</b> des unités dans tes ports et <b>apprends</b> de nouvelles techniques.</li>
-            <li>Avec <b>Navigation</b>, tes unités embarquent depuis un port et deviennent des chaloupes.</li>
-            <li>Gagne en conquérant toutes les capitales, ou avec le meilleur score au tour 30.</li>
+            <li><b>Explore</b> l'archipel : la brume ne se lève qu'autour de tes fidèles et de tes cités.</li>
+            <li><b>Allume les sanctuaires</b> : reste un tour sur un sanctuaire, puis allumes-y le feu de ton culte.</li>
+            <li><b>Récolte</b> nacre, épaves et reliques dans ton territoire pour faire grandir tes cités.</li>
+            <li><b>Appelle des fidèles</b> dans tes cités et apprends les <b>savoirs interdits</b>.</li>
+            <li><b>La marée monte</b> tous les 3 tours à partir du tour 6 : certaines côtes s'enfoncent puis disparaissent.</li>
+            <li>Avec <b>Navigation</b>, tes fidèles prennent la mer en barque depuis une cité.</li>
+            <li>Gagne en éteignant tous les autres cultes, ou avec le meilleur score au tour 30.</li>
           </ul>
-          <p class="keys">Glisser : déplacer la carte · Molette : zoom · Entrée : fin du tour · T : technologies · Échap : désélectionner</p>
+          <p class="keys">Glisser : déplacer la carte · Molette : zoom · Entrée : fin du tour · T : savoirs · Tab : unité suivante · Échap : désélectionner</p>
         </details>
       </div>
     </section>
 
     <section id="endScreen" class="screen hidden">
-      <div class="parchment start-card">
-        <h1 id="endTitle">Victoire !</h1>
+      <div class="start-card">
+        <h1 id="endTitle"></h1>
         <p class="tagline" id="endReason"></p>
         <table id="scoreTable" class="scores"></table>
-        <button id="restartBtn" class="btn btn-gold big">Nouvelle partie</button>
+        <button id="restartBtn" class="btn btn-accent big">Nouvelle partie</button>
       </div>
     </section>
 

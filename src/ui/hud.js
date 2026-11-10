@@ -1,15 +1,15 @@
-// Interface : sélection, panneau contextuel, arbre technologique, messages.
+// Interface : sélection, panneau contextuel, savoirs interdits, messages.
 import { UNITS, TECHS, RESOURCES, VESSELS } from '../core/data.js';
+import { sigil, oil } from './sigil.js';
 
 const $ = (sel) => document.querySelector(sel);
-const coin = '<span class="coin"></span>';
 
 const TERRAIN_NAMES = {
-  deep: ['Haute mer', 'Des eaux sombres et profondes.'],
-  shallow: ['Lagon', 'Des eaux turquoise, peu profondes.'],
-  land: ['Plage', 'Sable chaud et herbes folles.'],
-  forest: ['Palmeraie', 'Les palmiers offrent un bonus de défense.'],
-  mountain: ['Morne', 'Une montagne : défense accrue et vue dégagée.'],
+  deep: ['Abysses', 'Des eaux noires et sans fond.'],
+  shallow: ['Hauts-fonds', 'Récifs noirs et eaux peu profondes.'],
+  land: ['Basalte', 'Une roche froide, battue par la marée.'],
+  mangrove: ['Mangrove morte', 'Ses racines arrêtent la marche mais protègent ceux qui s’y cachent.'],
+  falaise: ['Falaise', 'Défense accrue et vue dégagée sur la brume.'],
 };
 
 export class Hud {
@@ -22,11 +22,16 @@ export class Hud {
     this.panel = $('#panel');
     this.tooltip = $('#tooltip');
 
+    const f = game.faction(humanId);
+    document.documentElement.style.setProperty('--accent', f.color);
+    document.documentElement.style.setProperty('--accent-light', f.light);
+    $('#factionSigil').innerHTML = sigil(f, 34);
+    $('#factionName').textContent = f.name;
     $('#topbar').classList.remove('hidden');
     $('#techBtn').onclick = () => this.openTech();
     $('#endTurnBtn').onclick = () => this.onEndTurn?.();
     $('#techModal').addEventListener('click', (e) => {
-      if (e.target.id === 'techModal' || e.target.hasAttribute('data-close')) this.closeTech();
+      if (e.target.id === 'techModal' || e.target.closest('[data-close]')) this.closeTech();
     });
 
     game.on((e) => this.onGameEvent(e));
@@ -79,9 +84,11 @@ export class Hud {
     h.hover = x == null ? null : { x, y };
     const target = h.attacks.find((u) => u.x === x && u.y === y);
     if (target && this.sel?.kind === 'unit') {
-      const { damage, retaliation } = this.game.previewCombat(this.sel.unit, target);
+      const g = this.game;
+      const { damage, retaliation } = g.previewCombat(this.sel.unit, target);
       const kill = damage >= target.hp;
-      this.tooltip.innerHTML = `⚔ Inflige <b>${damage}</b>${kill ? ' — <b>coulé !</b>' : ''}<br>🛡 Riposte <b>${kill ? 0 : retaliation}</b>`;
+      this.tooltip.innerHTML = `<small>${g.stats(this.sel.unit).name} → ${g.stats(target).name}</small>
+        <span>Inflige <b class="hit">${damage}</b>${kill ? ' · <b class="hit">fatal</b>' : ` · Riposte <b>${retaliation}</b>`}</span>`;
       this.tooltip.style.left = `${sx}px`;
       this.tooltip.style.top = `${sy}px`;
       this.tooltip.classList.remove('hidden');
@@ -128,12 +135,12 @@ export class Hud {
   refresh() {
     const g = this.game;
     const f = g.faction(this.me);
-    $('#factionChip .flag').style.background = f.color;
-    $('#factionName').textContent = f.name;
     $('#stars').textContent = f.stars;
-    $('#income').textContent = `+${g.income(this.me)}`;
+    $('#income').textContent = `+${g.income(this.me)} / tour`;
     $('#turn').textContent = g.turn;
-    $('#maxTurns').textContent = '/30';
+    const n = g.tidesIn();
+    $('#tide').innerHTML = n <= 0 ? 'La marée <b>monte</b>' : `La marée monte dans <b>${n} tour${n > 1 ? 's' : ''}</b>`;
+    $('#tideChip').classList.toggle('soon', n <= 1);
     $('#score').textContent = g.score(this.me);
     const anyReady = g.unitsOf(this.me).some((u) => !u.moved && (g.reachable(u).size || g.attackTargets(u).length || g.canCapture(u)));
     $('#endTurnBtn').classList.toggle('pulse', this.myTurn && !anyReady);
@@ -152,15 +159,16 @@ export class Hud {
     if (sel.kind === 'unit') p.innerHTML = this.unitHtml(sel.unit);
     else if (sel.kind === 'city') p.innerHTML = this.cityHtml(sel.city);
     else p.innerHTML = this.tileHtml(sel.x, sel.y);
+    const owner = sel.unit?.owner ?? sel.city?.owner ?? this.game.tile(sel.x, sel.y)?.owner;
+    p.style.setProperty('--panel-accent', owner != null ? this.game.faction(owner).color : '#2C4A44');
     p.querySelectorAll('[data-action]').forEach((btn) => {
       btn.onclick = () => this.act(btn.dataset.action, btn.dataset.arg);
     });
   }
 
   ownerLine(fid) {
-    if (fid == null) return '<div class="owner">Sans pavillon</div>';
-    const f = this.game.faction(fid);
-    return `<div class="owner"><span class="flag" style="background:${f.color}"></span>${f.name}</div>`;
+    if (fid == null) return '<p class="owner">Sans culte</p>';
+    return `<p class="owner">${this.game.faction(fid).name}</p>`;
   }
 
   unitHtml(u) {
@@ -168,68 +176,70 @@ export class Hud {
     const s = g.stats(u);
     const base = UNITS[u.type];
     const mine = u.owner === this.me;
-    const title = u.vessel ? `${s.name} <small style="font-size:16px">(${base.name})</small>` : s.name;
+    const title = u.vessel ? `${s.name}<small>${base.name} à bord</small>` : s.name;
     let actions = '';
     if (mine && this.myTurn) {
       if (g.canCapture(u)) {
         const city = g.cityAt(u.x, u.y);
-        actions += `<button class="btn btn-gold" data-action="capture">🏴‍☠️ Capturer ${city.owner == null ? 'le repaire' : city.name}</button>`;
+        actions += `<button class="btn btn-accent" data-action="capture">Allumer le feu de ${city.owner == null ? 'ce sanctuaire' : city.name}</button>`;
       }
-      if (g.canHeal(u)) actions += '<button class="btn" data-action="heal">✚ Soigner</button>';
-      if (u.vessel === 'chaloupe') {
+      if (g.canHeal(u)) actions += '<button class="btn" data-action="heal">Veiller</button>';
+      if (u.vessel === 'barque') {
         const err = g.upgradeError(u);
-        actions += `<button class="btn" data-action="upgrade" ${err ? `disabled title="${err}"` : ''}>⛵ Galion (${VESSELS.galion.cost} ${coin})</button>`;
+        actions += `<button class="btn" data-action="upgrade" ${err ? `disabled title="${err}"` : ''}>Navire noir · ${VESSELS.navire.cost} ${oil}</button>`;
       }
     }
     let status = '';
     if (mine && this.myTurn) {
-      if (u.moved && u.attacked) status = '<p class="note">Cette unité a terminé son tour.</p>';
-      else if (u.moved) status = '<p class="note">Déplacée — peut encore attaquer.</p>';
+      if (u.moved && u.attacked) status = '<p class="note">Sa lanterne faiblit : il a agi ce tour.</p>';
+      else if (u.moved) status = '<p class="note">Déplacé — peut encore attaquer.</p>';
     }
-    const capHint = mine && g.cityAt(u.x, u.y)?.owner !== this.me && g.cityAt(u.x, u.y) && u.moved && !u.vessel
-      ? '<p class="note">Reste ici jusqu\'au prochain tour pour capturer.</p>' : '';
+    const city = g.cityAt(u.x, u.y);
+    const capHint = mine && city && city.owner !== this.me && u.moved && !u.vessel
+      ? '<p class="note">Reste ici jusqu’au prochain tour pour allumer le feu du culte.</p>' : '';
+    const sinking = g.tile(u.x, u.y).sink ? '<p class="note warn">Cette terre s’enfonce dans la mer.</p>' : '';
     return `
       <h2>${title}</h2>
       ${this.ownerLine(u.owner)}
       <div class="hpbar"><div style="width:${(u.hp / s.maxHp) * 100}%"></div></div>
       <div class="stats">
-        <div><b>${u.hp}/${s.maxHp}</b>PV</div>
+        <div><b>${u.hp}</b>PV</div>
         <div><b>${s.atk}</b>Attaque</div>
         <div><b>${s.def}</b>Défense</div>
         <div><b>${s.move}·${s.range}</b>Mvt·Portée</div>
       </div>
-      <p>${u.vessel ? 'Un navire de la flotte : sa portée lui permet de bombarder les côtes.' : base.desc}</p>
-      ${status}${capHint}
+      <p class="flavor">${u.vessel ? 'Une coque noire sur l’eau noire. Sa portée lui permet de frapper les côtes.' : base.desc}</p>
+      ${status}${capHint}${sinking}
       <div class="actions">${actions}</div>`;
   }
 
   cityHtml(city) {
     const g = this.game;
     if (city.owner == null) {
-      return `<h2>Repaire</h2>${this.ownerLine(null)}
-        <p>Un repaire de forbans indépendants. Amène une unité dessus et reste-y un tour pour le capturer.</p>`;
+      return `<h2>Sanctuaire</h2>${this.ownerLine(null)}
+        <p class="flavor">Un cierge éteint sous une voûte de pierre. Amène un fidèle ici et reste un tour pour y allumer le feu de ton culte.</p>`;
     }
     const mine = city.owner === this.me;
     const pops = Array.from({ length: city.level + 1 }, (_, i) => `<span class="${i < city.pop ? 'on' : ''}"></span>`).join('');
     let recruits = '';
     if (mine) {
-      recruits = '<h3 style="font-family:var(--title);font-weight:400;margin:12px 0 0;font-size:22px">Recruter</h3><div class="recruits">';
+      recruits = '<h3>Appeler un fidèle</h3><div class="recruits">';
       for (const [type, def] of Object.entries(UNITS)) {
         const err = this.myTurn ? g.trainError(city, type) : 'Attends ton tour.';
         const locked = def.tech && !g.hasTech(this.me, def.tech);
         recruits += `<button class="recruit" data-action="train" data-arg="${type}" ${err ? `disabled title="${err}"` : ''}>
-          <div class="name">${locked ? '🔒 ' : ''}${def.name}<span class="cost">${def.cost}${coin}</span></div>
-          <div class="mini">${locked ? `Nécessite ${TECHS[def.tech].name}` : `⚔${def.atk} 🛡${def.def} 👣${def.move} 🎯${def.range} ❤${def.hp}`}</div>
+          <span class="name">${def.name}<span class="cost">${def.cost}${oil}</span></span>
+          <span class="mini">${locked ? `Nécessite ${TECHS[def.tech].name}` : `Att ${def.atk} · Déf ${def.def} · Mvt ${def.move} · Portée ${def.range}`}</span>
         </button>`;
       }
-      recruits += `</div><p class="note">Équipage : ${g.unitCount(city)}/${city.level + 1}</p>`;
+      recruits += `</div><p class="note">Fidèles rattachés : ${g.unitCount(city)} / ${city.level + 1}</p>`;
     }
     return `
-      <h2>${city.capital ? '👑 ' : ''}${city.name}</h2>
+      <h2>${city.name}${city.capital ? '<small>Capitale</small>' : ''}</h2>
       ${this.ownerLine(city.owner)}
-      <p>Niveau <b>${city.level}</b> · rapporte <b>${city.level + (city.capital ? 1 : 0)}</b> ${coin} par tour</p>
+      <p>Niveau <b>${city.level}</b> · produit <b>${city.level + (city.capital ? 1 : 0)}</b> ${oil} par tour</p>
       <div class="pop">${pops}</div>
-      <p class="note">Récolte des ressources dans le territoire pour faire grandir ce port.</p>
+      <p class="note">Récolte les ressources du territoire pour faire grandir la cité.</p>
       ${recruits}`;
   }
 
@@ -241,11 +251,12 @@ export class Hud {
     if (t.resource) {
       const r = RESOURCES[t.resource];
       const err = this.myTurn ? g.harvestError(x, y) : 'Attends ton tour.';
-      res = `<p><b>${r.name}</b> — +${r.pop} population</p>
-        <div class="actions"><button class="btn btn-gold" data-action="harvest" ${err ? `disabled title="${err}"` : ''}>Récolter (${r.cost} ${coin})</button></div>
+      res = `<p><b>${r.name}</b> — +${r.pop} fidèle${r.pop > 1 ? 's' : ''}</p>
+        <div class="actions"><button class="btn btn-accent" data-action="harvest" ${err ? `disabled title="${err}"` : ''}>Récolter · ${r.cost} ${oil}</button></div>
         ${err ? `<p class="note">${err}</p>` : ''}`;
     }
-    return `<h2>${name}</h2>${t.owner != null ? this.ownerLine(t.owner) : ''}<p>${desc}</p>${res}`;
+    const sink = t.sink ? `<p class="note warn">Condamnée par la marée (stade ${t.sink} sur 3).</p>` : '';
+    return `<h2>${name}</h2>${t.owner != null ? this.ownerLine(t.owner) : ''}<p class="flavor">${desc}</p>${sink}${res}`;
   }
 
   act(action, arg) {
@@ -258,12 +269,12 @@ export class Hud {
     else if (action === 'harvest') g.harvest(sel.x, sel.y);
     else if (action === 'train') {
       const unit = g.train(sel.city, arg);
-      if (unit) this.toast(`${UNITS[arg].name} recruté à ${sel.city.name}.`);
+      if (unit) this.toast(`${UNITS[arg].name} rejoint ${sel.city.name}.`);
     }
     this.select(this.sel);
   }
 
-  // ---------- Technologies ----------
+  // ---------- Savoirs interdits ----------
 
   openTech() {
     $('#techModal').classList.remove('hidden');
@@ -288,12 +299,12 @@ export class Hud {
       el.className = `tech ${state} ${tech.tier === 1 ? 'root' : ''}`;
       el.style.setProperty('--col', tech.branch + 1);
       el.style.setProperty('--row', tech.tier);
-      el.innerHTML = `<h4>${tech.name}</h4><p>${tech.desc}</p>
-        <span class="cost">${owned ? '✔ Acquise' : locked ? `🔒 ${TECHS[tech.req].name}` : `${cost} ${coin}`}</span>`;
+      el.innerHTML = `<span class="tname">${tech.name}</span><span class="tdesc">${tech.desc}</span>
+        <span class="cost">${owned ? 'Acquis' : locked ? `Après ${TECHS[tech.req].name}` : `${cost} ${oil}`}</span>`;
       el.onclick = () => {
         if (!this.myTurn || state !== 'available') return;
         if (g.research(id)) {
-          this.toast(`Nouvelle technique : ${tech.name} !`);
+          this.toast(`Savoir acquis : ${tech.name}.`);
           this.select(this.sel);
         }
       };
@@ -306,22 +317,22 @@ export class Hud {
   toast(text, color) {
     const el = document.createElement('div');
     el.className = 'toast';
-    if (color) el.style.borderLeftColor = color;
+    el.style.borderLeftColor = color ?? 'var(--accent)';
     el.textContent = text;
     const box = $('#toasts');
     box.appendChild(el);
     while (box.children.length > 4) box.firstChild.remove();
-    setTimeout(() => el.classList.add('out'), 3200);
-    setTimeout(() => el.remove(), 3700);
+    setTimeout(() => el.classList.add('out'), 3600);
+    setTimeout(() => el.remove(), 4100);
   }
 
-  banner(text, color) {
+  banner(faction) {
     const b = $('#banner');
-    if (!text) {
+    if (!faction) {
       b.classList.add('hidden');
       return;
     }
-    b.innerHTML = `<span class="flag" style="background:${color}"></span>${text}`;
+    b.innerHTML = `${sigil(faction, 26)}<span>${faction.name} agissent dans la brume…</span>`;
     b.classList.remove('hidden');
   }
 
@@ -330,14 +341,17 @@ export class Hud {
     const seen = (x, y) => g.isExplored(this.me, x, y);
     if (e.type === 'capture') {
       const who = g.faction(e.unit.owner);
-      if (e.unit.owner === this.me) this.toast(`${e.city.name} rejoint ta flotte !`, who.color);
-      else if (e.previous === this.me) this.toast(`${who.name} ont pris ${e.city.name} !`, who.color);
-      else if (seen(e.city.x, e.city.y)) this.toast(`${who.name} capturent ${e.city.name}.`, who.color);
+      if (e.unit.owner === this.me) this.toast(`${e.city.name} brûle désormais de ta flamme.`, who.color);
+      else if (e.previous === this.me) this.toast(`${who.name} ont pris ${e.city.name}.`, who.color);
+      else if (seen(e.city.x, e.city.y)) this.toast(`${who.name} s’emparent de ${e.city.name}.`, who.color);
     } else if (e.type === 'levelup' && e.city.owner === this.me) {
-      const bonus = e.city.level === 2 ? ' (+4 doublons)' : e.city.level === 3 ? ' — territoire agrandi' : '';
-      this.toast(`${e.city.name} passe au niveau ${e.city.level}${bonus} !`);
+      const bonus = e.city.level === 2 ? ' (+4 huile)' : e.city.level === 3 ? ' — sa lumière porte plus loin' : '';
+      this.toast(`${e.city.name} atteint le niveau ${e.city.level}${bonus}.`);
     } else if (e.type === 'eliminated') {
-      this.toast(`${e.faction.name} ont été anéantis !`, e.faction.color);
+      this.toast(`${e.faction.name} ont disparu dans les flots.`, e.faction.color);
+    } else if (e.type === 'tide') {
+      const lost = e.submerged.filter((t) => seen(t.x, t.y)).length;
+      this.toast(lost ? `La marée monte : ${lost} terre${lost > 1 ? 's' : ''} englouties.` : 'La marée monte. De nouvelles côtes s’enfoncent.', '#7FD1B9');
     } else if (e.type === 'death' && e.unit.owner === this.me) {
       if (this.sel?.unit === e.unit) this.select(null);
     }

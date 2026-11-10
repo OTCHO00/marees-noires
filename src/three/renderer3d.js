@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { createStage } from './stage.js';
 import * as M from './models.js';
+import { createWater } from './water.js';
 
 const STEP_MS = 170;
 const LIGHT_POOL = 14; // nombre fixe de lumières : évite de recompiler les shaders
@@ -141,20 +142,16 @@ export class Renderer3D {
   // ---------- Construction ----------
 
   buildSea() {
-    const size = this.game.size;
-    const c = (size - 1) / 2;
-    this.sea = M.createSea(size + 10, size + 10, () => 0);
-    this.sea.position.set(c, M.WATER_LEVEL, c);
+    this.sea = createWater(this.game.size);
     this.scene.add(this.sea);
     this.recolorSea();
   }
 
   recolorSea() {
-    const c = (this.game.size - 1) / 2;
-    this.sea.userData.recolor((lx, lz) => {
-      const t = this.game.tile(Math.round(lx + c), Math.round(lz + c));
-      if (!t || !this.visible(t.x, t.y)) return 0;
-      return t.terrain === 'deep' ? 0 : 1;
+    this.sea.userData.recolor((x, y) => {
+      const t = this.game.tile(x, y);
+      if (!this.visible(x, y) || t.terrain === 'deep') return 'deep';
+      return t.terrain === 'land' && (t.sink || 0) < 3 ? 'land' : 'shallow';
     });
   }
 

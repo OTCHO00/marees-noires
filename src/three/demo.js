@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { createStage } from './stage.js';
 import * as M from './models.js';
+import { createWater } from './water.js';
 
 const AMBER = { color: '#E8A33D', light: '#F5C26B' };
 const BLOOD = { color: '#D9604F', light: '#F08A7C' };
@@ -22,16 +23,11 @@ const LAND = new Map([
 const isLand = (x, z) => LAND.has(`${x},${z}`);
 
 // Mer, plus claire près des côtes.
-const sea = M.createSea(18, 18, (x, z) => {
-  let d = Infinity;
-  for (const key of LAND.keys()) {
-    const [lx, lz] = key.split(',').map(Number);
-    d = Math.min(d, Math.max(Math.abs(x - lx), Math.abs(z - lz)));
-  }
-  return Math.max(0, Math.min(1, 1.6 - d));
-});
-sea.position.x = 5;
-sea.position.z = 5;
+const sea = createWater(11);
+sea.userData.recolor((x, z) => (isLand(x, z) ? 'land' : [...LAND.keys()].some((k) => {
+  const [lx, lz] = k.split(',').map(Number);
+  return Math.max(Math.abs(x - lx), Math.abs(z - lz)) <= 1;
+}) ? 'shallow' : 'deep'));
 scene.add(sea);
 stage.onFrame((t) => sea.userData.update(t));
 

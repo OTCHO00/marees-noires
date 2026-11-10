@@ -140,44 +140,6 @@ export function landBlock(seed, { sink = 0 } = {}) {
   return g;
 }
 
-// Mer : un plan facetté animé, plus clair sur les hauts-fonds.
-export function createSea(width, depth, shallowAt) {
-  const geo = new THREE.PlaneGeometry(width, depth, width * 2, depth * 2);
-  geo.rotateX(-Math.PI / 2);
-  const pos = geo.attributes.position;
-  const base = Float32Array.from(pos.array);
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(pos.count * 3), 3));
-  const deep = new THREE.Color('#0b1d21');
-  const shallow = new THREE.Color('#1d4440');
-  const recolor = (fn) => {
-    const col = geo.attributes.color;
-    const c = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      c.copy(deep).lerp(shallow, fn(base[i * 3], base[i * 3 + 2]));
-      col.setXYZ(i, c.r, c.g, c.b);
-    }
-    col.needsUpdate = true;
-  };
-  recolor(shallowAt);
-  const material = new THREE.MeshStandardMaterial({
-    vertexColors: true, roughness: 0.28, metalness: 0.25, flatShading: true,
-  });
-  const sea = new THREE.Mesh(geo, material);
-  sea.receiveShadow = true;
-  sea.position.y = WATER_LEVEL;
-  sea.userData.recolor = recolor;
-  sea.userData.update = (t) => {
-    for (let i = 0; i < pos.count; i++) {
-      const x = base[i * 3];
-      const z = base[i * 3 + 2];
-      pos.setY(i, Math.sin(x * 1.7 + t * 0.9) * 0.018 + Math.sin(z * 2.3 - t * 0.7) * 0.016 + Math.sin((x + z) * 4.1 + t * 1.6) * 0.006);
-    }
-    pos.needsUpdate = true;
-    geo.computeVertexNormals();
-  };
-  return sea;
-}
-
 export function mangrove(seed) {
   const r = rng(seed);
   const g = new THREE.Group();

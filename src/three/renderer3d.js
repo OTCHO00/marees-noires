@@ -7,6 +7,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { createStage } from './stage.js';
 import * as M from './models.js';
 import { createWater } from './water.js';
+import * as B from './buildings.js';
 
 const STEP_MS = 170;
 const LIGHT_POOL = 14; // nombre fixe de lumières : évite de recompiler les shaders
@@ -222,6 +223,10 @@ export class Renderer3D {
       if (t.city == null && t.feature === 'falaise') deco.add(M.falaise(seed));
       if (t.resource === 'relique') deco.add(M.relique());
       if (t.resource === 'epave') deco.add(M.epave(seed));
+      if (!t.feature && !t.resource && t.city == null && !t.sink) {
+        const prop = B.landProp(seed);
+        if (prop) deco.add(prop);
+      }
       if (t.sink >= 2) {
         for (const [dx, dz, h] of [[-0.2, 0.1, 0.34], [0.18, -0.15, 0.22]]) {
           const col = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, h, 6), M.mat('#3b403c'));
@@ -270,7 +275,7 @@ export class Renderer3D {
       rec.label.style.display = vis ? '' : 'none';
       if (!vis) continue;
       const f = city.owner != null ? this.game.faction(city.owner) : null;
-      const model = f ? M.city({ level: city.level, capital: city.capital, color: f.color, light: f.light, seed: city.id }) : M.sanctuary();
+      const model = f ? B.city({ level: city.level, capital: city.capital, color: f.color, light: f.light, seed: city.id }) : M.sanctuary();
       rec.group = this.adopt(M.bake(model));
       rec.group.position.set(city.x, 0, city.y);
       const pips = f ? Array.from({ length: city.level + 1 }, (_, i) => `<i class="${i < city.pop ? 'on' : ''}"></i>`).join('') : '';

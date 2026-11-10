@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { createStage } from './stage.js';
 import * as M from './models.js';
 import { createWater } from './water.js';
+import * as B from './buildings.js';
 
 const AMBER = { color: '#E8A33D', light: '#F5C26B' };
 const BLOOD = { color: '#D9604F', light: '#F08A7C' };
@@ -43,8 +44,8 @@ for (const [key, info] of LAND) {
   if (info.feat === 'mangrove') deco = M.mangrove(seed);
   if (info.feat === 'falaise') deco = M.falaise(seed);
   if (info.res === 'relique') deco = M.relique();
-  if (info.city === 'capital') deco = M.city({ level: 3, capital: true, ...AMBER, seed });
-  if (info.city === 'enemy') deco = M.city({ level: 2, ...BLOOD, seed });
+  if (info.city === 'capital') deco = B.city({ level: 5, capital: true, ...AMBER, seed });
+  if (info.city === 'enemy') deco = B.city({ level: 3, ...BLOOD, seed });
   if (info.city === 'sanctuary') deco = M.sanctuary();
   if (deco) {
     deco.position.set(x, top, z);

@@ -40,7 +40,7 @@ export function glowMat(color, intensity = 3) {
 
 // Déforme une géométrie de façon stable : deux sommets à la même position
 // bougent ensemble, donc les faces restent soudées.
-function jitter(geo, amount, seed = 1, axes = [1, 1, 1]) {
+export function jitter(geo, amount, seed = 1, axes = [1, 1, 1]) {
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
@@ -54,7 +54,7 @@ function jitter(geo, amount, seed = 1, axes = [1, 1, 1]) {
   return geo;
 }
 
-function mesh(geo, material, x = 0, y = 0, z = 0) {
+export function mesh(geo, material, x = 0, y = 0, z = 0) {
   const m = new THREE.Mesh(geo, material);
   m.position.set(x, y, z);
   m.castShadow = true;
@@ -62,12 +62,12 @@ function mesh(geo, material, x = 0, y = 0, z = 0) {
   return m;
 }
 
-function tube(points, radius, color, segments = 12) {
+export function tube(points, radius, color, segments = 12) {
   const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p)));
   return mesh(new THREE.TubeGeometry(curve, segments, radius, 5, false), mat(color));
 }
 
-const C = {
+export const C = {
   basalt: '#232c2a',
   basaltDark: '#161d1c',
   basaltLedge: '#2c3734',
@@ -211,7 +211,7 @@ export function relique(color = '#7FD1B9') {
 
 // ---------- Bâtiments ----------
 
-function gableRoof(w, d, h, color) {
+export function gableRoof(w, d, h, color) {
   const shape = new THREE.Shape();
   shape.moveTo(-w / 2 - 0.02, 0);
   shape.lineTo(0, h);
@@ -277,35 +277,6 @@ export function tower(light) {
   return g;
 }
 
-const HOUSE_SPOTS = [[-0.24, 0.2], [0.24, 0.22], [0.26, -0.2], [-0.22, -0.22], [0.02, 0.32], [-0.33, 0.0]];
-
-export function city({ level = 1, capital = false, color = '#E8A33D', light = '#F5C26B', seed = 1 } = {}) {
-  const g = new THREE.Group();
-  const n = Math.min(HOUSE_SPOTS.length, level + 1);
-  for (let i = 0; i < n; i++) {
-    const [x, z] = HOUSE_SPOTS[i];
-    const h = house(i % 3 === 2 ? light : color, seed + i * 11, { w: 0.22 + (i % 2) * 0.05, d: 0.2, h: 0.17 + (i % 3) * 0.03 });
-    h.position.set(x, LAND_TOP, z);
-    g.add(h);
-  }
-  if (capital) {
-    const t = tower(light);
-    t.position.set(0, LAND_TOP, -0.02);
-    g.add(t);
-  } else {
-    // Fanal sur un mât.
-    g.add(mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.5, 5), mat(C.wood), 0.02, LAND_TOP + 0.25, 0));
-    g.add(mesh(new THREE.BoxGeometry(0.06, 0.07, 0.06), glowMat(light, 4), 0.02, LAND_TOP + 0.52, 0));
-    const lamp = new THREE.PointLight(color, 2, 2.6, 1.8);
-    lamp.position.set(0.02, LAND_TOP + 0.55, 0);
-    g.add(lamp);
-  }
-  // Pavés au centre.
-  const plaza = jitter(new THREE.CylinderGeometry(0.2, 0.22, 0.02, 7), 0.01, seed);
-  g.add(mesh(plaza, mat(C.stoneDark), 0, LAND_TOP + 0.005, 0));
-  return g;
-}
-
 export function sanctuary() {
   const g = new THREE.Group();
   g.add(mesh(jitter(new THREE.BoxGeometry(0.42, 0.05, 0.3), 0.01, 8), mat(C.stoneDark), 0, LAND_TOP + 0.025, 0));
@@ -319,7 +290,7 @@ export function sanctuary() {
 
 // ---------- Unités ----------
 
-function lantern(color, intensity = 1.6) {
+export function lantern(color, intensity = 1.6) {
   const g = new THREE.Group();
   g.add(mesh(new THREE.BoxGeometry(0.045, 0.06, 0.045), mat(C.iron), 0, 0, 0));
   g.add(mesh(new THREE.BoxGeometry(0.035, 0.045, 0.05), glowMat(color, 5), 0, 0, 0));
@@ -405,7 +376,7 @@ export function unit(type, color, seed = 1) {
   return g;
 }
 
-function hull(len, width, height) {
+export function hull(len, width, height) {
   const shape = new THREE.Shape();
   shape.moveTo(-len / 2, height);
   shape.quadraticCurveTo(-len / 2 + 0.02, 0, -len / 4, 0);

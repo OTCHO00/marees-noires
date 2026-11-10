@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Archipel — La Guerre des Pavillons</title>
+    <meta name="description" content="Jeu de stratégie au tour par tour sur un archipel pirate." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Pirata+One&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <canvas id="board"></canvas>
+
+    <header id="topbar" class="hidden">
+      <div class="brand">Archipel</div>
+      <div class="chip" id="factionChip"><span class="flag"></span><span id="factionName"></span></div>
+      <div class="stat" title="Doublons (et revenu par tour)"><span class="coin"></span><b id="stars">0</b><small id="income"></small></div>
+      <div class="stat">Tour <b id="turn">1</b><small id="maxTurns"></small></div>
+      <div class="stat" title="Score">☠ <b id="score">0</b></div>
+      <div class="spacer"></div>
+      <button id="techBtn" class="btn" title="Technologies (T)">📜 <span class="label">Technologies</span></button>
+      <button id="endTurnBtn" class="btn btn-gold" title="Fin du tour (Entrée)">Fin du tour ⚓</button>
+    </header>
+
+    <aside id="panel" class="parchment hidden"></aside>
+    <div id="tooltip" class="hidden"></div>
+    <div id="toasts"></div>
+    <div id="banner" class="hidden"></div>
+
+    <div id="techModal" class="modal hidden">
+      <div class="parchment modal-card">
+        <button class="close" data-close>✕</button>
+        <h2>Savoirs des Sept Mers</h2>
+        <p class="sub">Dépense tes doublons pour apprendre de nouvelles techniques. Le coût augmente avec le nombre de ports.</p>
+        <div id="techTree" class="tech-tree"></div>
+      </div>
+    </div>
+
+    <section id="startScreen" class="screen">
+      <div class="waves"></div>
+      <div class="parchment start-card">
+        <h1>Archipel</h1>
+        <p class="tagline">La Guerre des Pavillons</p>
+        <h3>Choisis ton pavillon</h3>
+        <div id="factionPicker" class="picker factions"></div>
+        <div class="row">
+          <div>
+            <h3>Rivaux</h3>
+            <div id="rivalPicker" class="picker small"></div>
+          </div>
+          <div>
+            <h3>Archipel</h3>
+            <div id="sizePicker" class="picker small"></div>
+          </div>
+        </div>
+        <button id="startBtn" class="btn btn-gold big">Lever l'ancre !</button>
+        <details class="rules">
+          <summary>Comment jouer ?</summary>
+          <ul>
+            <li><b>Explore</b> l'archipel avec tes pirates et dissipe la brume.</li>
+            <li><b>Capture</b> les repaires : reste un tour sur le repaire, puis clique sur « Capturer ».</li>
+            <li><b>Récolte</b> poissons, cocotiers et or dans ton territoire pour faire grandir tes ports.</li>
+            <li><b>Recrute</b> des unités dans tes ports et <b>apprends</b> de nouvelles techniques.</li>
+            <li>Avec <b>Navigation</b>, tes unités embarquent depuis un port et deviennent des chaloupes.</li>
+            <li>Gagne en conquérant toutes les capitales, ou avec le meilleur score au tour 30.</li>
+          </ul>
+          <p class="keys">Glisser : déplacer la carte · Molette : zoom · Entrée : fin du tour · T : technologies · Échap : désélectionner</p>
+        </details>
+      </div>
+    </section>
+
+    <section id="endScreen" class="screen hidden">
+      <div class="parchment start-card">
+        <h1 id="endTitle">Victoire !</h1>
+        <p class="tagline" id="endReason"></p>
+        <table id="scoreTable" class="scores"></table>
+        <button id="restartBtn" class="btn btn-gold big">Nouvelle partie</button>
+      </div>
+    </section>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -6,10 +6,10 @@ import { createRng } from './rng.js';
 const TECH_BASE_COST = [0, 4, 6, 9, 14];
 
 export class Game {
-  constructor({ size = 16, players = [{ faction: 0, human: true }, { faction: 1 }], seed, sandbox = false } = {}) {
+  constructor({ size = 16, players = [{ faction: 0, human: true }, { faction: 1 }], seed, sandbox = false, reveal = false } = {}) {
     this.seed = seed ?? Math.floor(Math.random() * 1e9);
-    // Bac à sable : le joueur humain voit toute la carte, ne paie rien et
-    // n'a pas de limite de fidèles par cité. Pratique pour tester.
+    // Bac à sable : le joueur humain ne paie rien et n'a pas de limite de
+    // fidèles par cité. Carte révélée : il voit toute la carte dès le début.
     this.sandbox = sandbox;
     this.rng = createRng(this.seed ^ 0x9e3779b9);
     const map = generateMap({ size, factions: players.length, seed: this.seed });
@@ -42,11 +42,9 @@ export class Game {
       this.reveal(f.id, pos.x, pos.y, 2);
     });
     map.villages.forEach((pos) => this.createCity(pos.x, pos.y, null, false));
-    if (sandbox) {
-      for (const f of this.factions.filter((x) => x.human)) {
-        f.stars = 9999;
-        this.tiles.forEach((_, i) => f.explored.add(i));
-      }
+    for (const f of this.factions.filter((x) => x.human)) {
+      if (sandbox) f.stars = 9999;
+      if (reveal) this.tiles.forEach((_, i) => f.explored.add(i));
     }
     this.beginTurn(this.current, { income: false });
   }

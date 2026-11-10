@@ -282,8 +282,8 @@ export class Renderer3D {
       const pips = f ? Array.from({ length: city.level + 1 }, (_, i) => `<i class="${i < city.pop ? 'on' : ''}"></i>`).join('') : '';
       rec.label.style.setProperty('--c', f ? f.color : '#2C4A44');
       rec.label.innerHTML = f
-        ? `<span class="lv">${city.level}</span><span class="nm">${city.name}</span><span class="pips">${pips}</span>`
-        : '<span class="nm neutral">Sanctuaire</span>';
+        ? `<span class="cname"><span class="lv">${city.level}</span><span class="nm">${city.name}</span></span><span class="pips">${pips}</span>`
+        : '<span class="cname"><span class="nm neutral">Sanctuaire</span></span>';
       rec.popKey = `${city.pop}`;
     }
   }

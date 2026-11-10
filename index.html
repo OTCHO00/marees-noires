@@ -9,23 +9,23 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;600&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,600;0,700;0,800;0,900;1,600&display=swap" rel="stylesheet" />
   </head>
   <body>
     <canvas id="board"></canvas>
 
     <!-- Interface en jeu : un élément par coin de l'écran. -->
     <div id="hud" class="hidden">
-      <div class="corner tl">
+      <div class="corner tl card">
         <div id="factionSigil" class="sigil-halo"></div>
         <div class="who">
           <p id="factionName"></p>
-          <p class="oil-line"><b id="stars">0</b><span>huile</span><small id="income"></small></p>
+          <p class="stat-line"><b id="stars">0</b><span>huile</span><small id="income"></small></p>
         </div>
       </div>
 
-      <div class="corner tr">
-        <p class="turn-line"><span>Tour</span><b id="turn">1</b><small>/ 30</small></p>
+      <div class="corner tr card">
+        <p class="stat-line"><span>Tour</span><b id="turn">1</b><span>/ 30</span></p>
         <div id="tideChip" class="tide-line" title="À partir du tour 6, puis tous les 3 tours, des côtes commencent à sombrer">
           <span id="tide"></span>
           <svg viewBox="0 0 220 34" width="220" height="34" aria-hidden="true">
@@ -40,20 +40,24 @@
         </div>
       </div>
 
-      <aside id="registre" class="registre">
-        <button id="registreTab" class="registre-tab" aria-expanded="true"><span>Registre</span></button>
+      <aside id="registre" class="registre card">
+        <button id="registreTab" class="registre-tab" aria-expanded="true">Registre des cultes</button>
         <div class="registre-body">
-          <p class="registre-title">Registre des cultes</p>
           <div id="registreList"></div>
-          <p class="registre-note">Un trait par cité · score à droite</p>
         </div>
       </aside>
 
       <div class="corner br">
         <canvas id="minimap" width="250" height="150" aria-label="Mini-carte : clique pour t'y rendre"></canvas>
         <div class="br-actions">
-          <button id="techBtn" class="btn" title="Savoirs interdits (T)">Savoirs</button>
-          <button id="endTurnBtn" class="btn btn-accent" title="Fin du tour (Entrée)">Éteindre les feux</button>
+          <button id="techBtn" class="round" title="Savoirs interdits (T)">
+            <span class="disc"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 5.5 Q8 3.5 12 5.5 Q16 3.5 20 5.5 V19 Q16 17 12 19 Q8 17 4 19Z M12 5.5 V19" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg></span>
+            Savoirs
+          </button>
+          <button id="endTurnBtn" class="round accent big" title="Fin du tour (Entrée)">
+            <span class="disc"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M5 12.5 L10 17.5 L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
+            Fin du tour
+          </button>
         </div>
       </div>
     </div>

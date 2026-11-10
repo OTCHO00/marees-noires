@@ -390,65 +390,56 @@ export class Hud {
     return !req || g.hasTech(this.me, req) ? 'available' : 'locked';
   }
 
+  // Arbre radial : ton sceau au centre, une branche par direction, les
+  // rangs de plus en plus loin du centre. La fiche du savoir est à droite.
   renderTech() {
     const g = this.game;
     const W = window.innerWidth;
     const H = window.innerHeight;
     const ids = Object.keys(TECHS);
-    // Forme de chaque constellation : décalage horizontal et hauteur relative par rang.
-    const SHAPES = [
-      [[0, 0.7], [-60, 0.55], [30, 0.4], [-30, 0.23]],
-      [[-20, 0.7], [50, 0.56], [-40, 0.42], [30, 0.26]],
-      [[10, 0.7], [-50, 0.54], [60, 0.42], [0, 0.24]],
-      [[-30, 0.7], [40, 0.55], [-50, 0.39], [20, 0.25]],
-      [[20, 0.7], [-40, 0.56], [40, 0.41], [-10, 0.22]],
-    ];
-    // Les constellations occupent l'espace entre le titre et la fiche du bas.
-    const top = 120;
-    const bottom = Math.max(top + 200, H - 240);
+    const narrow = W < 860;
+    const cx = narrow ? W / 2 : (W - 360) / 2;
+    const cy = narrow ? H * 0.4 : H / 2 + 16;
+    const rMax = Math.max(140, Math.min(cx - 70, (narrow ? H * 0.36 : H / 2 - 70)));
+    const RADII = [0, 0.3, 0.52, 0.74, 0.96].map((k) => k * rMax);
+    const angle = (b) => ((-90 + b * 72) * Math.PI) / 180;
     const pos = (id) => {
       const t = TECHS[id];
-      const [dx, fy] = SHAPES[t.branch][t.tier - 1];
-      return { x: W * (0.1 + t.branch * 0.2) + dx, y: top + ((bottom - top) * (fy - 0.22)) / 0.48 };
+      return { x: cx + Math.cos(angle(t.branch)) * RADII[t.tier], y: cy + Math.sin(angle(t.branch)) * RADII[t.tier] };
     };
     if (!this.techSel || !TECHS[this.techSel]) this.techSel = ids.find((id) => this.techState(id) === 'available') ?? ids[0];
 
-    // Ciel étoilé, liens des constellations et noms des branches.
-    let seed = 7;
-    const rnd = () => {
-      seed = (seed * 9301 + 49297) % 233280;
-      return seed / 233280;
-    };
-    let stars = '';
-    for (let i = 0; i < 160; i++) stars += `M${(rnd() * W).toFixed(0)} ${(rnd() * H * 0.78).toFixed(0)} l0 0 `;
-    let on = '';
-    let off = '';
-    for (const id of ids) {
-      const req = TECHS[id].req;
-      if (!req) continue;
-      const a = pos(req);
+    // Liens entre les savoirs et noms des branches.
+    const links = ids.map((id) => {
+      const t = TECHS[id];
+      const a = t.req ? pos(t.req) : { x: cx, y: cy };
       const b = pos(id);
-      const seg = `M${a.x} ${a.y} L${b.x} ${b.y} `;
-      if (this.techState(id) === 'owned') on += seg;
-      else off += seg;
-    }
-    const names = BRANCHES.map((br, i) => `<text x="${W * (0.1 + i * 0.2)}" y="${bottom + 66}" text-anchor="middle" class="branch-name" fill="${br.color}">${br.name}</text>`).join('');
+      const lit = this.techState(id) === 'owned';
+      const color = lit ? BRANCHES[t.branch].color : 'rgba(255,255,255,0.12)';
+      return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${color}" stroke-width="${lit ? 5 : 3}" stroke-linecap="round"/>`;
+    }).join('');
+    const names = BRANCHES.map((br, i) => {
+      const a = angle(i);
+      const r = rMax + 82;
+      return `<text x="${cx + Math.cos(a) * r}" y="${cy + Math.sin(a) * r + 5}" text-anchor="middle" class="branch-name" fill="${br.color}">${br.name}</text>`;
+    }).join('');
     const sky = $('#techSky');
     sky.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    sky.innerHTML = `<path d="${stars}" stroke="#CFE3DC" stroke-width="1.6" stroke-linecap="round" opacity="0.35"/>
-      <path d="${off}" stroke="#2C4A44" stroke-width="1.5" stroke-dasharray="4 5" fill="none"/>
-      <path d="${on}" stroke="#F5C26B" stroke-width="2" fill="none" opacity="0.85"/>${names}`;
+    sky.innerHTML = `${links}${names}<circle cx="${cx}" cy="${cy}" r="40" fill="#1d363d"/>`;
 
-    $('#techStars').innerHTML = ids.map((id) => {
-      const t = TECHS[id];
-      const p = pos(id);
-      const state = this.techState(id);
-      const color = BRANCHES[t.branch].color;
-      const ink = state === 'owned' ? '#1A1206' : state === 'available' ? color : '#4c5f5b';
-      return `<button class="star ${state}${id === this.techSel ? ' selected' : ''}" data-tech="${id}" style="left:${p.x}px;top:${p.y}px;--c:${color}" aria-label="${t.name}">
-          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="${ink}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button><span class="star-label ${state}" style="left:${p.x}px;top:${p.y}px">${t.name}</span>`;
-    }).join('');
+    const me = g.faction(this.me);
+    $('#techStars').innerHTML = `<div style="position:absolute;left:${cx}px;top:${cy}px;transform:translate(-50%,-50%)">${sigil(me, 60)}</div>`
+      + ids.map((id) => {
+        const t = TECHS[id];
+        const p = pos(id);
+        const state = this.techState(id);
+        const color = BRANCHES[t.branch].color;
+        const ink = state === 'owned' ? '#1b1306' : state === 'available' ? color : '#4f6563';
+        return `<button class="node ${state}${id === this.techSel ? ' selected' : ''}" data-tech="${id}" style="left:${p.x}px;top:${p.y}px;--c:${color}" aria-label="${t.name}">
+            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="${ink}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="price">${g.techCost(this.me, id)}</span>
+          </button><span class="node-label ${state}" style="left:${p.x}px;top:${p.y}px">${t.name}</span>`;
+      }).join('');
     $('#techStars').querySelectorAll('[data-tech]').forEach((b) => {
       b.onclick = () => {
         this.techSel = b.dataset.tech;
@@ -456,7 +447,7 @@ export class Hud {
       };
     });
     const owned = ids.filter((id) => g.hasTech(this.me, id)).length;
-    $('#techCount').textContent = `Les constellations qu’on ne voit que sous la mer · ${owned} savoirs sur ${ids.length}`;
+    $('#techCount').textContent = `${owned} savoirs sur ${ids.length} · ${g.isFree(me) ? '∞' : me.stars} huile disponible`;
 
     // Fiche du savoir choisi.
     const id = this.techSel;
@@ -465,19 +456,20 @@ export class Hud {
     const state = this.techState(id);
     const err = state === 'owned' ? null : g.researchError(this.me, id);
     const can = this.myTurn && !err;
-    const action = state === 'owned' ? 'Déjà acquis' : `Apprendre · ${g.techCost(this.me, id)} ${oil}`;
+    const action = state === 'owned' ? 'Déjà appris' : `Apprendre · ${g.techCost(this.me, id)} ${oil}`;
     const card = $('#techCard');
     card.style.setProperty('--c', color);
-    card.innerHTML = `<div class="badge"><svg viewBox="0 0 24 24" width="46" height="46" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <div class="info">
-        <span class="meta">${BRANCHES[t.branch].name.toUpperCase()} · RANG ${t.tier}${t.req ? ` · REQUIERT ${TECHS[t.req].name.toUpperCase()}` : ''}</span>
+    card.innerHTML = `<div class="badge"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="#1b1306" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div>
+        <span class="meta">${BRANCHES[t.branch].name.toUpperCase()} · RANG ${t.tier}</span>
         <h3>${t.name}</h3>
-        <p>${t.desc}${t.lore ? ` <em>« ${t.lore} »</em>` : ''}</p>
+        <p>${t.desc}${t.lore ? `<em>« ${t.lore} »</em>` : ''}</p>
+        ${t.req && state === 'locked' ? `<p class="note">Il faut d’abord apprendre ${TECHS[t.req].name}.</p>` : ''}
       </div>
       <button class="btn ${can ? 'btn-accent' : ''}" id="techLearn" ${can ? '' : `disabled title="${err ?? 'Attends ton tour.'}"`}>${action}</button>`;
     $('#techLearn').onclick = () => {
       if (g.research(id)) {
-        this.toast(`Savoir acquis : ${t.name}.`, color);
+        this.toast(`Savoir appris : ${t.name}`);
         this.select(this.sel);
       }
     };

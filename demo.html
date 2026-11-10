@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marées noires — essai 3D</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;600&family=Spectral:ital@0;1&display=swap" rel="stylesheet" />
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #060c0d; }
+      #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+      .tag { position: fixed; left: 20px; top: 18px; color: #d9d2c3; font-family: Spectral, Georgia, serif; pointer-events: none; }
+      .tag h1 { margin: 0; font: 600 30px 'Cormorant SC', Georgia, serif; color: #f1e9d8; }
+      .tag p { margin: 4px 0 0; font-style: italic; font-size: 14px; color: #a9b3ae; }
+    </style>
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+    <div class="tag">
+      <h1>Marées noires</h1>
+      <p>Essai de rendu 3D isométrique · glisser pour déplacer, molette pour zoomer</p>
+    </div>
+    <script type="module" src="/src/three/demo.js"></script>
+  </body>
+</html>

@@ -89,8 +89,8 @@ export function generateMap({ size = 16, factions = 2, seed = Date.now(), landRa
   for (const t of tiles) {
     if (t.terrain !== 'land') continue;
     const r = rng.next();
-    if (r < 0.24) t.feature = 'forest';
-    else if (r < 0.36) t.feature = 'mountain';
+    if (r < 0.24) t.feature = 'mangrove';
+    else if (r < 0.36) t.feature = 'falaise';
   }
   for (const cap of capitals) at(cap.x, cap.y).feature = null;
 
@@ -112,25 +112,25 @@ export function generateMap({ size = 16, factions = 2, seed = Date.now(), landRa
   const isCity = (t) => cities().some((city) => city.x === t.x && city.y === t.y);
   for (const t of tiles) {
     if (isCity(t)) continue;
-    if (t.terrain === 'shallow' && rng.chance(0.2)) t.resource = 'fish';
-    else if (t.terrain === 'land' && t.feature === 'mountain' && rng.chance(0.35)) t.resource = 'gold';
-    else if (t.terrain === 'land' && t.feature !== 'mountain' && rng.chance(0.18)) t.resource = 'fruit';
+    if (t.terrain === 'shallow' && rng.chance(0.2)) t.resource = 'nacre';
+    else if (t.terrain === 'land' && t.feature === 'falaise' && rng.chance(0.35)) t.resource = 'relique';
+    else if (t.terrain === 'land' && t.feature !== 'falaise' && rng.chance(0.18)) t.resource = 'epave';
   }
   // Chaque capitale démarre avec au moins deux cocotiers et un banc de poissons.
   for (const cap of capitals) {
     const ns = rng.shuffle(around(cap.x, cap.y));
-    let fruits = ns.filter((n) => n.resource === 'fruit').length;
+    let fruits = ns.filter((n) => n.resource === 'epave').length;
     for (const n of ns) {
       if (fruits >= 2) break;
       if (n.terrain === 'land' && !n.resource && !isCity(n)) {
         n.feature = null;
-        n.resource = 'fruit';
+        n.resource = 'epave';
         fruits++;
       }
     }
-    if (!ns.some((n) => n.resource === 'fish')) {
+    if (!ns.some((n) => n.resource === 'nacre')) {
       const water = ns.find((n) => n.terrain === 'shallow' && !n.resource);
-      if (water) water.resource = 'fish';
+      if (water) water.resource = 'nacre';
     }
   }
 

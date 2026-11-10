@@ -18,8 +18,10 @@ export class Game {
     this.turn = 1;
     this.currentIndex = 0;
     this.result = null;
+    this.nextTide = RULES.firstTide;
     this.listeners = new Set();
     this.names = this.rng.shuffle([...CITY_NAMES]);
+    for (const t of this.tiles) t.sink = 0;
     this.factions = players.map((p) => ({
       ...FACTIONS[p.faction],
       human: !!p.human,
@@ -33,7 +35,7 @@ export class Game {
     map.capitals.forEach((pos, i) => {
       const f = this.factions[i];
       const city = this.createCity(pos.x, pos.y, f.id, true);
-      this.spawnUnit('matelot', city);
+      this.spawnUnit('acolyte', city);
       this.reveal(f.id, pos.x, pos.y, 2);
     });
     map.villages.forEach((pos) => this.createCity(pos.x, pos.y, null, false));
@@ -167,7 +169,7 @@ export class Game {
 
   visionRadius(u) {
     const t = this.tile(u.x, u.y);
-    return t.feature === 'mountain' || u.vessel || u.type === 'eclaireur' ? 2 : 1;
+    return t.feature === 'falaise' || u.vessel || u.type === 'guetteur' ? 2 : 1;
   }
 
   reveal(fid, x, y, r) {
@@ -180,7 +182,7 @@ export class Game {
   }
 
   canEnterWater(u, tile, isBoat) {
-    if (tile.terrain === 'deep' && !(isBoat && this.stats(u).deep) && !this.hasTech(u.owner, 'hautemer')) return false;
+    if (tile.terrain === 'deep' && !(isBoat && this.stats(u).deep) && !this.hasTech(u.owner, 'abysses')) return false;
     return true;
   }
 
@@ -244,7 +246,7 @@ export class Game {
     u.y = y;
     const t = this.tile(x, y);
     if (t.terrain === 'land') u.vessel = null;
-    else if (!u.vessel) u.vessel = 'chaloupe';
+    else if (!u.vessel) u.vessel = 'barque';
     u.moved = true;
     this.reveal(u.owner, x, y, this.visionRadius(u));
     this.emit({ type: 'move', unit: u, path });
@@ -365,11 +367,11 @@ export class Game {
   trainError(city, type) {
     const def = UNITS[type];
     const f = this.faction(city.owner);
-    if (!f || f !== this.current) return "Ce port ne t'appartient pas.";
+    if (!f || f !== this.current) return "Cette cité ne t'appartient pas.";
     if (def.tech && !f.techs.has(def.tech)) return `Nécessite ${TECHS[def.tech].name}.`;
-    if (this.unitAt(city.x, city.y)) return 'Le port est occupé.';
-    if (this.unitCount(city) >= city.level + 1) return 'Équipage complet : fais grandir le port.';
-    if (f.stars < def.cost) return 'Pas assez de doublons.';
+    if (this.unitAt(city.x, city.y)) return 'La cité est occupée.';
+    if (this.unitCount(city) >= city.level + 1) return 'Plus de fidèles disponibles : fais grandir la cité.';
+    if (f.stars < def.cost) return 'Pas assez d’huile.';
     return null;
   }
 
@@ -391,7 +393,7 @@ export class Game {
     const def = TECHS[tech];
     if (f.techs.has(tech)) return 'Déjà maîtrisée.';
     if (def.req && !f.techs.has(def.req)) return `Nécessite ${TECHS[def.req].name}.`;
-    if (f.stars < this.techCost(fid, tech)) return 'Pas assez de doublons.';
+    if (f.stars < this.techCost(fid, tech)) return 'Pas assez d’huile.';
     return null;
   }
 
@@ -411,7 +413,7 @@ export class Game {
     const res = RESOURCES[t.resource];
     if (t.owner !== f.id) return 'Hors de ton territoire.';
     if (!f.techs.has(res.tech)) return `Nécessite ${TECHS[res.tech].name}.`;
-    if (f.stars < res.cost) return 'Pas assez de doublons.';
+    if (f.stars < res.cost) return 'Pas assez d’huile.';
     return null;
   }
 
@@ -429,17 +431,17 @@ export class Game {
 
   upgradeError(u) {
     const f = this.faction(u.owner);
-    if (u.vessel !== 'chaloupe') return 'Seules les chaloupes deviennent des galions.';
-    if (!f.techs.has('galions')) return 'Nécessite Galions.';
+    if (u.vessel !== 'barque') return 'Seules les barques deviennent des navires noirs.';
+    if (!f.techs.has('navires')) return 'Nécessite Navires noirs.';
     if (this.tile(u.x, u.y).owner !== u.owner) return 'Doit être dans tes eaux.';
-    if (f.stars < VESSELS.galion.cost) return 'Pas assez de doublons.';
+    if (f.stars < VESSELS.navire.cost) return 'Pas assez d’huile.';
     return null;
   }
 
   upgradeShip(u) {
     if (u.owner !== this.current.id || this.upgradeError(u)) return false;
-    this.current.stars -= VESSELS.galion.cost;
-    u.vessel = 'galion';
+    this.current.stars -= VESSELS.navire.cost;
+    u.vessel = 'navire';
     this.emit({ type: 'upgrade', unit: u });
     return true;
   }
@@ -478,7 +480,12 @@ export class Game {
       i = (i + 1) % this.factions.length;
       if (i === 0) this.turn++;
     } while (!this.factions[i].alive);
+    const newRound = i <= this.currentIndex;
     this.currentIndex = i;
+    if (newRound && this.turn === this.nextTide) {
+      this.tide();
+      this.nextTide += RULES.tideEvery;
+    }
     if (this.turn > RULES.maxTurns) {
       const best = [...this.factions].filter((f) => f.alive).sort((a, b) => this.score(b.id) - this.score(a.id))[0];
       this.result = { winner: best.id, reason: 'score' };
@@ -486,6 +493,39 @@ export class Game {
       return;
     }
     this.beginTurn(this.current);
+  }
+
+  // ---------- Marée ----------
+
+  tidesIn() {
+    return this.nextTide - this.turn;
+  }
+
+  // La mer monte : les îles condamnées s'enfoncent d'un stade, celles qui
+  // dépassent le dernier stade sont englouties, et de nouvelles côtes
+  // commencent à sombrer.
+  tide() {
+    const submerged = [];
+    for (const t of this.tiles) {
+      if (t.sink > 0 && ++t.sink > RULES.sinkStages) {
+        this.submerge(t);
+        submerged.push(t);
+      }
+    }
+    const candidates = this.rng.shuffle(this.tiles.filter((t) =>
+      t.terrain === 'land' && !t.sink && t.city == null && this.around(t.x, t.y).some((n) => n.terrain !== 'land')));
+    const started = candidates.slice(0, Math.max(1, Math.round(this.size / 8)));
+    for (const t of started) t.sink = 1;
+    this.emit({ type: 'tide', started, submerged });
+  }
+
+  submerge(t) {
+    t.terrain = 'shallow';
+    t.feature = null;
+    t.resource = null;
+    t.sink = 0;
+    const u = this.unitAt(t.x, t.y);
+    if (u && !u.vessel) u.vessel = 'barque'; // les fidèles se sauvent en barque
   }
 
   score(fid) {

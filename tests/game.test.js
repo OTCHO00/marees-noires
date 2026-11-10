@@ -13,7 +13,7 @@ test('la génération est déterministe pour une même graine', () => {
   assert.equal(a.capitals.length, 3);
 });
 
-test('chaque faction démarre avec une capitale et un matelot', () => {
+test('chaque faction démarre avec une capitale et un acolyte', () => {
   const g = new Game({ size: 16, players, seed: 7 });
   for (const f of g.factions) {
     assert.equal(g.citiesOf(f.id).length, 1);
@@ -22,7 +22,7 @@ test('chaque faction démarre avec une capitale et un matelot', () => {
   }
 });
 
-test('un matelot ne se déplace que d’une case', () => {
+test('un acolyte ne se déplace que d’une case', () => {
   const g = new Game({ size: 16, players, seed: 3 });
   const u = g.unitsOf(0)[0];
   for (const step of g.reachable(u).values()) assert.ok(Math.max(Math.abs(step.x - u.x), Math.abs(step.y - u.y)) <= 1);
@@ -44,12 +44,12 @@ test('le combat inflige des dégâts et la riposte', () => {
 test('récolter fait grandir la ville', () => {
   const g = new Game({ size: 16, players, seed: 11 });
   const f = g.current;
-  f.techs.add('cueillette');
+  f.techs.add('pillage');
   f.stars = 20;
   const cap = g.citiesOf(f.id)[0];
-  const fruit = g.around(cap.x, cap.y).find((t) => t.resource === 'fruit');
-  assert.ok(fruit, 'la capitale a des cocotiers');
-  assert.ok(g.harvest(fruit.x, fruit.y));
+  const epave = g.around(cap.x, cap.y).find((t) => t.resource === 'epave');
+  assert.ok(epave, 'la capitale a des cocotiers');
+  assert.ok(g.harvest(epave.x, epave.y));
   assert.equal(cap.pop, 1);
 });
 
@@ -62,4 +62,25 @@ test('des parties IA contre IA se terminent sans erreur', () => {
     }
     assert.ok(g.result.winner != null);
   }
+});
+
+test('la marée fait sombrer puis engloutit des côtes', () => {
+  const g = new Game({ size: 16, players, seed: 9 });
+  g.tide();
+  const doomed = g.tiles.filter((t) => t.sink === 1);
+  assert.ok(doomed.length >= 1);
+  assert.ok(doomed.every((t) => t.terrain === 'land' && t.city == null));
+  const t = doomed[0];
+  for (let i = 0; i < 3; i++) g.tide();
+  assert.equal(t.terrain, 'shallow');
+  assert.equal(t.sink, 0);
+});
+
+test('une unité sur une île engloutie embarque en barque', () => {
+  const g = new Game({ size: 16, players, seed: 9 });
+  const u = g.unitsOf(0)[0];
+  const t = g.around(u.x, u.y).find((n) => n.terrain === 'land' && n.city == null);
+  u.x = t.x; u.y = t.y;
+  g.submerge(t);
+  assert.equal(u.vessel, 'barque');
 });

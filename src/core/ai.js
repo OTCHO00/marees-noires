@@ -4,8 +4,8 @@ import { chebyshev } from './map.js';
 import { UNITS } from './data.js';
 
 const RESEARCH_ORDER = [
-  'cueillette', 'peche', 'navigation', 'mousquets', 'escrime', 'hautemer',
-  'prospection', 'cartographie', 'galions', 'artillerie',
+  'pillage', 'plongee', 'navigation', 'harpons', 'rites', 'abysses',
+  'archeologie', 'guet', 'navires', 'mortiers',
 ];
 
 export function* aiTurn(game) {
@@ -46,7 +46,7 @@ export function* aiTurn(game) {
     if (game.units.includes(u) && tryAttack(game, u)) yield { type: 'attack', unit: u };
   }
 
-  // 3. Navires : passer aux galions quand c'est possible.
+  // 3. Navires : passer aux navires quand c'est possible.
   for (const u of game.unitsOf(f.id)) {
     if (!game.upgradeError(u)) {
       game.upgradeShip(u);
@@ -69,10 +69,10 @@ function* trainUnits(game, f) {
   for (const city of game.rng.shuffle(game.citiesOf(f.id))) {
     const options = Object.keys(UNITS).filter((type) => !game.trainError(city, type));
     if (!options.length) continue;
-    const scouts = game.unitsOf(f.id).filter((u) => u.type === 'eclaireur').length;
+    const scouts = game.unitsOf(f.id).filter((u) => u.type === 'guetteur').length;
     const weights = options.map((type) => {
-      if (type === 'eclaireur') return scouts < 1 ? 3 : 0.3;
-      if (type === 'canonnier') return 1.2;
+      if (type === 'guetteur') return scouts < 1 ? 3 : 0.3;
+      if (type === 'mortier') return 1.2;
       return UNITS[type].cost;
     });
     let r = game.rng.next() * weights.reduce((a, b) => a + b, 0);
@@ -137,7 +137,7 @@ function distanceField(game, u, targets) {
   const n = game.size * game.size;
   const dist = new Array(n).fill(Infinity);
   const sail = game.hasTech(u.owner, 'navigation') || !!u.vessel;
-  const deep = game.hasTech(u.owner, 'hautemer') || u.vessel === 'galion';
+  const deep = game.hasTech(u.owner, 'abysses') || u.vessel === 'navire';
   const passable = (t) => t.terrain === 'land' || (sail && (t.terrain === 'shallow' || deep));
   const isPort = (t) => t.city != null && game.city(t.city).owner === u.owner;
   const allowed = (a, b) => {

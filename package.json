@@ -1,0 +1,16 @@
+{
+  "name": "archipel",
+  "version": "0.1.0",
+  "description": "Archipel — un jeu de stratégie au tour par tour sur un archipel pirate, inspiré de Polytopia.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  }
+}

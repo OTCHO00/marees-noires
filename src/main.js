@@ -71,9 +71,10 @@ picker(
 );
 
 // Le menu : une scène 3D vivante, puis le choix de l'expédition.
-// Style de mer choisi dans la page d'essai (eau.html) : ?eau=huile, etc.
+// Mer « abysse » dans le menu, « aplats » en partie. La page d'essai
+// (eau.html) peut imposer un autre style : ?eau=huile, etc.
 const WATER = new URLSearchParams(location.search).get('eau') ?? undefined;
-const menu = createMenuScene($('#menuScene'), { water: WATER });
+const menu = createMenuScene($('#menuScene'), { water: WATER ?? 'abysse' });
 const showMenu = (id) => ['#menuMain', '#menuSetup', '#menuRulesPanel'].forEach((s) => $(s).classList.toggle('hidden', s !== id));
 $('#menuNew').onclick = () => {
   $('#sandbox').checked = false;

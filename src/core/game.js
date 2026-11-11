@@ -590,6 +590,7 @@ export class Game {
 
   submerge(t) {
     t.terrain = 'shallow';
+    t.drowned = true; // une île engloutie : la mer en garde la trace
     t.feature = null;
     t.resource = null;
     t.sink = 0;

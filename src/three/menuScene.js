@@ -193,7 +193,7 @@ function fogBank(radius, height, opacity, seed) {
   return mesh;
 }
 
-export function createMenuScene(canvas) {
+export function createMenuScene(canvas, { water } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
@@ -240,7 +240,7 @@ export function createMenuScene(canvas) {
   heights.set('5,6', 1);
 
   // La même mer stylisée que dans le jeu, jusqu'à l'horizon.
-  const sea = createWater(SIZE, { planeSize: 600 });
+  const sea = createWater(SIZE, { planeSize: 600, style: water });
   sea.userData.recolor((x, y) => {
     if (heights.has(`${x},${y}`)) return 'land';
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (heights.has(`${x + dx},${y + dz}`)) return 'shallow';
@@ -426,6 +426,7 @@ export function createMenuScene(canvas) {
     const pos = camPos.clone().addScaledVector(lookDir, d).addScaledVector(right, halfW * 0.62).addScaledVector(up, halfH * 0.58);
     moonDisc.position.copy(pos);
     halo.position.copy(pos);
+    sea.userData.setMoon(pos.clone().sub(centre));
     moonDisc.scale.setScalar(16);
     halo.scale.setScalar(48);
   }

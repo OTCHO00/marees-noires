@@ -71,7 +71,9 @@ picker(
 );
 
 // Le menu : une scène 3D vivante, puis le choix de l'expédition.
-const menu = createMenuScene($('#menuScene'));
+// Style de mer choisi dans la page d'essai (eau.html) : ?eau=huile, etc.
+const WATER = new URLSearchParams(location.search).get('eau') ?? undefined;
+const menu = createMenuScene($('#menuScene'), { water: WATER });
 const showMenu = (id) => ['#menuMain', '#menuSetup', '#menuRulesPanel'].forEach((s) => $(s).classList.toggle('hidden', s !== id));
 $('#menuNew').onclick = () => {
   $('#sandbox').checked = false;
@@ -111,7 +113,7 @@ function startGame() {
   const players = [{ faction: setup.faction, human: true }, ...others.map((f) => ({ faction: f.id }))];
   const game = new Game({ size: setup.size, players, sandbox: $('#sandbox').checked, reveal: $('#reveal').checked });
   const me = setup.faction;
-  const renderer = new Renderer3D($('#board'), game, me);
+  const renderer = new Renderer3D($('#board'), game, me, { water: WATER });
   const hud = new Hud(game, renderer, me);
   window.marees = { game, renderer, hud }; // pratique pour déboguer dans la console
 

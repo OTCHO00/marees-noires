@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marées noires — essais de mer</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@600;700&family=Grenze:ital,wght@0,500;0,600;1,400&display=swap" rel="stylesheet" />
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #060c0d; color: #eaf2ee; font-family: Grenze, Georgia, serif; }
+      #board { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+      .lab { position: fixed; left: 20px; top: 20px; width: 300px; padding: 18px; border-radius: 16px; background: rgba(12, 26, 28, 0.92); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(127, 209, 185, 0.14); }
+      .lab h1 { margin: 0 0 2px; font: 700 30px 'Grenze Gotisch', serif; }
+      .lab > p { margin: 0 0 14px; color: #93aaa9; font-size: 14px; }
+      .lab button { display: block; width: 100%; margin-top: 8px; padding: 10px 12px; border: 0; border-radius: 10px; text-align: left; color: inherit; font: inherit; background: #17302f; cursor: pointer; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35); }
+      .lab button b { display: block; font: 700 19px 'Grenze Gotisch', serif; }
+      .lab button span { display: block; margin-top: 2px; font-size: 13px; color: #93aaa9; }
+      .lab button.on { background: #f4b544; color: #1b1306; }
+      .lab button.on span { color: #3a2a0c; }
+      .lab a { display: inline-block; margin-top: 14px; color: #7fd1b9; font-size: 14px; }
+      .lab small { display: block; margin-top: 10px; color: #93aaa9; }
+    </style>
+  </head>
+  <body>
+    <canvas id="board"></canvas>
+    <aside class="lab">
+      <h1>Essais de mer</h1>
+      <p>Choisis un style : la carte change en direct.</p>
+      <div id="styles"></div>
+      <a id="menuLink" href="/">Voir ce style dans le menu et en partie →</a>
+      <small>Glisser : déplacer · Molette : zoom · Touches 1 à 4 : changer de style</small>
+    </aside>
+    <script type="module" src="/src/waterLab.js"></script>
+  </body>
+</html>

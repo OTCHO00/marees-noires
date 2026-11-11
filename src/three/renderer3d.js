@@ -17,7 +17,7 @@ const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const ELEV = (35.264 * Math.PI) / 180;
 
 export class Renderer3D {
-  constructor(canvas, game, viewerId) {
+  constructor(canvas, game, viewerId, { water } = {}) {
     this.canvas = canvas;
     this.game = game;
     this.viewerId = viewerId;
@@ -39,6 +39,7 @@ export class Renderer3D {
     this.glide = null;
     this.raycaster = new THREE.Raycaster();
 
+    this.waterStyle = water;
     this.buildSea();
     this.buildLightPool();
     this.buildOverlay();
@@ -145,7 +146,7 @@ export class Renderer3D {
   // ---------- Construction ----------
 
   buildSea() {
-    this.sea = createWater(this.game.size);
+    this.sea = createWater(this.game.size, { style: this.waterStyle });
     this.scene.add(this.sea);
     this.recolorSea();
   }
@@ -154,7 +155,8 @@ export class Renderer3D {
     this.sea.userData.recolor((x, y) => {
       const t = this.game.tile(x, y);
       if (!this.visible(x, y) || t.terrain === 'deep') return 'deep';
-      return t.terrain === 'land' && (t.sink || 0) < 3 ? 'land' : 'shallow';
+      if (t.terrain === 'land') return (t.sink || 0) < 3 ? 'land' : 'shallow';
+      return t.drowned ? 'sunken' : 'shallow';
     });
   }
 

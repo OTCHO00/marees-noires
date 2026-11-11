@@ -109,33 +109,118 @@ function moonSprites() {
 }
 
 // ---------- Brume ----------
-// Des nappes horizontales dont la densité suit un bruit animé : la brume
-// roule au ras de l'eau au lieu de flotter en boules.
-function mistLayer(y, opacity, seed) {
+// Bruit partagé par les shaders de brume.
+const FOG_NOISE = `
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float noise(vec2 p) { vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y); }
+  float fbm(vec2 p) { float v = 0.0; float a = 0.5; for (int i = 0; i < 6; i++) { v += a * noise(p); p = p * 2.03 + 11.7; a *= 0.5; } return v; }
+`;
+
+// Nappes au ras de l'eau : étirées dans le sens du vent, elles roulent
+// lentement et s'éclaircissent du côté de la lune.
+function mistLayer(y, opacity, seed, speed) {
   const material = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
-    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color('#7f9893') }, uOpacity: { value: opacity }, uSeed: { value: seed } },
+    uniforms: {
+      uTime: { value: 0 }, uOpacity: { value: opacity }, uSeed: { value: seed }, uSpeed: { value: speed },
+      uDark: { value: new THREE.Color('#1c2c2c') }, uLit: { value: new THREE.Color('#5d7470') },
+    },
     vertexShader: `varying vec2 vXZ; varying float vDepth;
       void main() { vec4 w = modelMatrix * vec4(position, 1.0); vXZ = w.xz; vec4 v = viewMatrix * w; vDepth = -v.z; gl_Position = projectionMatrix * v; }`,
-    fragmentShader: `uniform float uTime; uniform vec3 uColor; uniform float uOpacity; uniform float uSeed;
+    fragmentShader: `uniform float uTime; uniform float uOpacity; uniform float uSeed; uniform float uSpeed; uniform vec3 uDark; uniform vec3 uLit;
       varying vec2 vXZ; varying float vDepth;
-      float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-      float noise(vec2 p) { vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
-        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y); }
-      float fbm(vec2 p) { float v = 0.0; float a = 0.5; for (int i = 0; i < 5; i++) { v += a * noise(p); p *= 2.03; a *= 0.5; } return v; }
+      ${FOG_NOISE}
       void main() {
-        vec2 p = vXZ * vec2(0.09, 0.16) + vec2(uTime * 0.025, uTime * 0.008) + uSeed;
-        float n = fbm(p + fbm(p * 0.7 - uTime * 0.01));
-        float a = smoothstep(0.42, 0.78, n) * uOpacity;
-        a *= smoothstep(5.0, 14.0, vDepth) * (1.0 - smoothstep(70.0, 110.0, vDepth));
-        gl_FragColor = vec4(uColor, a);
+        float t = uTime * uSpeed;
+        vec2 p = vXZ * vec2(0.07, 0.19) + vec2(t * 0.03, t * 0.006) + uSeed;
+        vec2 q = vec2(fbm(p * 0.8 - t * 0.01), fbm(p * 0.8 + 4.1 + t * 0.012));
+        float n = fbm(p + q * 1.4);
+        float a = smoothstep(0.38, 0.8, n) * uOpacity;
+        // Invisible tout près de la caméra, fondue dans la nuit au loin.
+        a *= smoothstep(4.0, 16.0, vDepth) * (1.0 - smoothstep(80.0, 120.0, vDepth));
+        vec3 col = mix(uDark, uLit, smoothstep(0.5, 0.95, n) * smoothstep(-6.0, 30.0, vXZ.x));
+        gl_FragColor = vec4(col, a);
         #include <colorspace_fragment>
       }`,
   });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(220, 220).rotateX(-Math.PI / 2), material);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(260, 260).rotateX(-Math.PI / 2), material);
   mesh.position.set(14, y, 0);
   mesh.renderOrder = 3;
+  return mesh;
+}
+
+// Rideau de brume vertical tourné vers la caméra : empilés à différentes
+// profondeurs, ils forment des bancs qui roulent et se décalent en
+// parallaxe quand la caméra dérive.
+function fogSheet(width, height, opacity, seed, speed = 1) {
+  const material = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: {
+      uTime: { value: 0 }, uOpacity: { value: opacity }, uSeed: { value: seed }, uSpeed: { value: speed },
+      uAspect: { value: width / height },
+      uColor: { value: new THREE.Color('#1b2b2c') }, uTop: { value: new THREE.Color('#566c69') },
+    },
+    vertexShader: `varying vec2 vUv; varying vec3 vWorld;
+      void main() { vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform float uTime; uniform float uOpacity; uniform float uSeed; uniform float uSpeed; uniform float uAspect; uniform vec3 uColor; uniform vec3 uTop;
+      varying vec2 vUv; varying vec3 vWorld;
+      ${FOG_NOISE}
+      void main() {
+        float t = uTime * uSpeed;
+        vec2 p = vec2(vUv.x * uAspect * 0.9 + t * 0.05 + uSeed, vUv.y * 1.6 - t * 0.02);
+        float n = fbm(p + vec2(fbm(p * 1.4 + t * 0.03), fbm(p * 1.1 - t * 0.02)) * 0.9);
+        // Crête bouillonnante ; la brume s'épaissit vers l'eau.
+        float crest = 0.25 + n * 0.85;
+        float a = 1.0 - smoothstep(crest - 0.45, crest, vUv.y);
+        a *= smoothstep(0.0, 0.12, vUv.x) * smoothstep(1.0, 0.88, vUv.x);
+        a *= (0.55 + 0.45 * n) * uOpacity;
+        // Volutes éclairées par la lune, du côté droit.
+        vec3 col = mix(uColor, uTop, smoothstep(0.45, 0.9, n) * (0.35 + 0.65 * vUv.y) * (0.5 + 0.5 * vUv.x));
+        gl_FragColor = vec4(col, a);
+        #include <colorspace_fragment>
+      }`,
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+  mesh.renderOrder = 4;
+  return mesh;
+}
+
+// Banc de brume sur l'horizon : un rideau cylindrique dont le bord
+// supérieur bouillonne, plus dense au ras de l'eau.
+function fogBank(radius, height, opacity, seed) {
+  const material = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    fog: false,
+    uniforms: {
+      uTime: { value: 0 }, uOpacity: { value: opacity }, uSeed: { value: seed }, uHeight: { value: height },
+      uColor: { value: new THREE.Color('#1a2a2b') }, uTop: { value: new THREE.Color('#40524f') },
+    },
+    vertexShader: `varying vec2 vUv; varying vec3 vWorld;
+      void main() { vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform float uTime; uniform float uOpacity; uniform float uSeed; uniform float uHeight; uniform vec3 uColor; uniform vec3 uTop;
+      varying vec2 vUv; varying vec3 vWorld;
+      ${FOG_NOISE}
+      void main() {
+        float h = clamp(vWorld.y / uHeight, 0.0, 1.0);
+        vec2 p = vec2(vUv.x * 46.0 + uTime * 0.04 + uSeed, h * 2.2 - uTime * 0.015);
+        float n = fbm(p + vec2(fbm(p * 1.3 + uTime * 0.02), 0.0));
+        // La crête du banc ondule ; dessous, la brume est presque pleine.
+        float crest = 0.35 + n * 0.75;
+        float a = (1.0 - smoothstep(crest - 0.35, crest, h)) * uOpacity;
+        a *= 0.75 + 0.25 * n;
+        vec3 col = mix(uColor, uTop, smoothstep(0.1, 0.9, h) * n);
+        gl_FragColor = vec4(col, a);
+        #include <colorspace_fragment>
+      }`,
+  });
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, height, 96, 1, true), material);
+  mesh.position.set(14, height / 2 - 0.4, 6);
+  mesh.renderOrder = 2;
   return mesh;
 }
 
@@ -187,6 +272,11 @@ export function createMenuScene(canvas) {
 
   // La même mer stylisée partout, qui se fond dans la nuit vers l'horizon.
   const sea = createWater(SIZE, { planeSize: 600, fade: { color: HORIZON, near: 30, far: 110 } });
+  // Une seule teinte de mer : pas de hauts-fonds autour de l'île, seule
+  // l'écume dessine le pied des falaises.
+  const u = sea.material.uniforms;
+  u.uDeep.value.copy(u.uMid.value);
+  u.uShallow.value.copy(u.uMid.value);
   sea.userData.recolor((x, y) => {
     if (heights.has(`${x},${y}`)) return 'land';
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (heights.has(`${x + dx},${y + dz}`)) return 'shallow';
@@ -316,7 +406,22 @@ export function createMenuScene(canvas) {
   boat.scale.setScalar(1.6);
   scene.add(boat);
 
-  const mists = [mistLayer(0.35, 0.42, 0), mistLayer(1.2, 0.22, 7.3)];
+  // Brume : deux bancs sur l'horizon, deux nappes au ras de l'eau.
+  // Brume : un banc sur l'horizon, des rideaux à plusieurs profondeurs et
+  // une nappe au ras de l'eau.
+  const sheets = [
+    // [x, z, largeur, hauteur, opacité, graine, vitesse]
+    [10, -30, 140, 12, 0.8, 3.1, 0.6],
+    [12, -8, 90, 6.5, 0.6, 8.4, 0.8],
+    [16, 2.5, 60, 3.2, 0.5, 1.7, 1],
+    [6, 13.5, 50, 1.8, 0.42, 5.2, 1.3],
+  ].map(([x, z, w, h, o, seed, speed]) => {
+    const m = fogSheet(w, h, o, seed, speed);
+    m.position.set(x, h / 2 - 0.25, z);
+    m.lookAt(BASE_CAMERA.x, h / 2 - 0.25, BASE_CAMERA.z);
+    return m;
+  });
+  const mists = [fogBank(80, 16, 0.85, 0), ...sheets, mistLayer(0.3, 0.32, 0, 1)];
   scene.add(...mists);
 
   const composer = new EffectComposer(renderer);

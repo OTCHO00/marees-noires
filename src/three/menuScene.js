@@ -176,6 +176,8 @@ function fogSheet(width, height, opacity, seed, speed = 1) {
         float crest = 0.25 + n * 0.85;
         float a = 1.0 - smoothstep(crest - 0.45, crest, vUv.y);
         a *= smoothstep(0.0, 0.12, vUv.x) * smoothstep(1.0, 0.88, vUv.x);
+        // Le pied du rideau se fond dans l'eau : pas d'arête là où il la coupe.
+        a *= smoothstep(0.0, 0.3, vUv.y);
         a *= (0.55 + 0.45 * n) * uOpacity;
         // Volutes éclairées par la lune, du côté droit.
         vec3 col = mix(uColor, uTop, smoothstep(0.45, 0.9, n) * (0.35 + 0.65 * vUv.y) * (0.5 + 0.5 * vUv.x));
@@ -213,6 +215,7 @@ function fogBank(radius, height, opacity, seed) {
         float crest = 0.35 + n * 0.75;
         float a = (1.0 - smoothstep(crest - 0.35, crest, h)) * uOpacity;
         a *= 0.75 + 0.25 * n;
+        a *= smoothstep(-0.4, 1.2, vWorld.y);
         vec3 col = mix(uColor, uTop, smoothstep(0.1, 0.9, h) * n);
         gl_FragColor = vec4(col, a);
         #include <colorspace_fragment>
@@ -272,11 +275,6 @@ export function createMenuScene(canvas) {
 
   // La même mer stylisée partout, qui se fond dans la nuit vers l'horizon.
   const sea = createWater(SIZE, { planeSize: 600, fade: { color: HORIZON, near: 30, far: 110 } });
-  // Une seule teinte de mer : pas de hauts-fonds autour de l'île, seule
-  // l'écume dessine le pied des falaises.
-  const u = sea.material.uniforms;
-  u.uDeep.value.copy(u.uMid.value);
-  u.uShallow.value.copy(u.uMid.value);
   sea.userData.recolor((x, y) => {
     if (heights.has(`${x},${y}`)) return 'land';
     for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (heights.has(`${x + dx},${y + dz}`)) return 'shallow';
@@ -417,8 +415,8 @@ export function createMenuScene(canvas) {
     [6, 13.5, 50, 1.8, 0.42, 5.2, 1.3],
   ].map(([x, z, w, h, o, seed, speed]) => {
     const m = fogSheet(w, h, o, seed, speed);
-    m.position.set(x, h / 2 - 0.25, z);
-    m.lookAt(BASE_CAMERA.x, h / 2 - 0.25, BASE_CAMERA.z);
+    m.position.set(x, h / 2 + M.WATER_LEVEL, z);
+    m.lookAt(BASE_CAMERA.x, h / 2 + M.WATER_LEVEL, BASE_CAMERA.z);
     return m;
   });
   const mists = [fogBank(80, 16, 0.85, 0), ...sheets, mistLayer(0.3, 0.32, 0, 1)];

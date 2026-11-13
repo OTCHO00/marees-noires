@@ -7,9 +7,6 @@
     <meta name="description" content="Jeu de stratégie au tour par tour : des cultes rivaux se disputent un archipel qui s'enfonce dans la mer." />
     <meta name="theme-color" content="#0B1416" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;600;700;800&family=Grenze:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet" />
   </head>
   <body>
     <canvas id="board"></canvas>
@@ -28,14 +25,14 @@
         <p class="stat-line"><span>Tour</span><b id="turn">1</b><span>/ 30</span></p>
         <div id="tideChip" class="tide-line" title="À partir du tour 6, puis tous les 3 tours, des côtes commencent à sombrer">
           <span id="tide"></span>
-          <svg viewBox="0 0 220 34" width="220" height="34" aria-hidden="true">
+          <svg viewBox="0 0 220 34" width="220" height="34" preserveAspectRatio="none" aria-hidden="true">
             <defs>
-              <linearGradient id="tideWater" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7FD1B9" stop-opacity="0.9" /><stop offset="1" stop-color="#1d4440" /></linearGradient>
+              <linearGradient id="tideWater" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#9fc3c9" stop-opacity="0.75" /><stop offset="1" stop-color="#9fc3c9" stop-opacity="0.15" /></linearGradient>
               <clipPath id="tideClip"><rect id="tideFill" x="0" y="0" width="0" height="34" /></clipPath>
             </defs>
-            <rect x="1" y="1" width="218" height="32" rx="16" fill="#060c0d" stroke="#2C4A44" />
+            <rect x="0.5" y="0.5" width="219" height="33" fill="#03090b" stroke="rgba(231,226,214,0.22)" />
             <path clip-path="url(#tideClip)" d="M2 17 Q20 11 38 17 T74 17 T110 17 T146 17 T182 17 T218 17 L218 33 L2 33Z" fill="url(#tideWater)" />
-            <rect x="1" y="1" width="218" height="32" rx="16" fill="none" stroke="#7FD1B9" stroke-opacity="0.45" />
+
           </svg>
         </div>
       </div>
@@ -51,11 +48,11 @@
         <canvas id="minimap" width="250" height="150" aria-label="Mini-carte : clique pour t'y rendre"></canvas>
         <div class="br-actions">
           <button id="techBtn" class="round" title="Savoirs interdits (T)">
-            <span class="disc"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 5.5 Q8 3.5 12 5.5 Q16 3.5 20 5.5 V19 Q16 17 12 19 Q8 17 4 19Z M12 5.5 V19" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg></span>
+            <span class="disc"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 5.5 Q8 3.5 12 5.5 Q16 3.5 20 5.5 V19 Q16 17 12 19 Q8 17 4 19Z M12 5.5 V19" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg></span>
             Savoirs
           </button>
           <button id="endTurnBtn" class="round accent big" title="Fin du tour (Entrée)">
-            <span class="disc"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M5 12.5 L10 17.5 L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
+            <span class="disc"><svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M5 12.5 L10 17.5 L19 7" fill="none" stroke="currentColor" stroke-width="1.6" /></svg></span>
             Fin du tour
           </button>
         </div>
@@ -76,84 +73,102 @@
         <p id="techCount"></p>
       </header>
       <button class="techsky-close close" data-close aria-label="Fermer">
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" stroke-width="1.8" /></svg>
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" stroke-width="1.4" /></svg>
       </button>
       <div id="techCard" class="techsky-card"></div>
     </div>
 
-    <!-- Menu de départ : une scène 3D vivante derrière le menu. -->
-    <section id="startScreen" class="menu">
+    <!-- Menu de départ : la scène 3D occupe l'écran, l'interface l'encadre. -->
+    <section id="startScreen" class="mn" data-view="home">
       <canvas id="menuScene"></canvas>
-      <div class="menu-shade"></div>
+      <div class="mn-shade"></div>
 
-      <div id="menuMain" class="menu-main">
-        <p class="kicker">L'archipel s'enfonce</p>
-        <h1>Marées<br />noires</h1>
-        <p class="tagline">Quatre cultes se disputent les dernières îles. Seuls leurs feux percent encore la brume.</p>
-        <div class="eye-rule" aria-hidden="true"><span></span><svg viewBox="0 0 40 20" width="40" height="20"><path d="M2 10 Q20 -4 38 10 Q20 24 2 10Z" fill="none" stroke="currentColor" stroke-width="1.6" /><circle cx="20" cy="10" r="4" fill="currentColor" /></svg><span></span></div>
-        <nav class="menu-nav" aria-label="Menu principal">
-          <button id="menuNew" class="menu-btn primary">
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="8" y="7" width="8" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M10 7 L12 4 L14 7 M12 18 V21" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
-            Nouvelle partie
-          </button>
-          <button id="menuSandbox" class="menu-btn">Bac à sable</button>
-          <button id="menuRules" class="menu-btn">Comment jouer</button>
+      <aside class="mn-rail">
+        <div class="mn-logo">
+          <svg viewBox="0 0 32 40" width="26" height="32" aria-hidden="true"><path d="M13 38l2-22h2l2 22M12 16h8M14 16v-5h4v5M16 11V7M3 10l9 3M29 10l-9 3M6 38h20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" /></svg>
+          <p class="mn-name">Marées noires</p>
+          <p class="mn-sub">Jeu de stratégie</p>
+        </div>
+        <nav class="mn-nav" aria-label="Menu principal">
+          <span class="mn-dot" aria-hidden="true"></span>
+          <button data-go="home" class="on">Accueil</button>
+          <button data-go="new">Nouvelle partie</button>
+          <button data-go="sandbox">Bac à sable</button>
+          <button data-go="rules">Comment jouer</button>
         </nav>
-      </div>
+        <div class="mn-note">
+          <p class="mn-note-big">La mer monte au tour 6</p>
+          <p class="mn-note-small">puis tous les trois tours</p>
+          <p class="mn-version">Version 0.4</p>
+        </div>
+      </aside>
 
-      <div id="menuSetup" class="menu-panel hidden">
-        <h2>Nouvelle expédition</h2>
-        <h3>Ton culte</h3>
-        <div id="factionPicker" class="picker factions"></div>
-        <p id="factionGift" class="gift"></p>
-        <div class="row">
-          <div>
-            <h3>Cultes rivaux</h3>
-            <div id="rivalPicker" class="picker small"></div>
-          </div>
-          <div>
-            <h3>Archipel</h3>
-            <div id="sizePicker" class="picker small"></div>
+      <p class="mn-motto" aria-hidden="true">L'archipel s'enfonce</p>
+
+      <main class="mn-stage">
+        <div id="menuMain" class="mn-view mn-home">
+          <h1 class="mn-title">Marées<br />noires</h1>
+          <p class="mn-lede">Quatre cultes se disputent un archipel que la mer engloutit tour après tour. Seuls leurs feux percent encore la brume.</p>
+          <div class="mn-actions">
+            <button id="menuNew" class="mn-btn primary">Nouvelle partie <svg class="mn-arrow" viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><path d="M0 6h24M19 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.2" /></svg></button>
+            <button id="menuSandbox" class="mn-btn ghost">Bac à sable <svg class="mn-arrow" viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><path d="M0 6h24M19 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.2" /></svg></button>
+            <button class="mn-link" data-rules>Comment jouer</button>
           </div>
         </div>
-        <label class="sandbox">
-          <input type="checkbox" id="sandbox" />
-          <span>Bac à sable : huile illimitée, fidèles sans limite</span>
-        </label>
-        <label class="sandbox">
-          <input type="checkbox" id="reveal" />
-          <span>Carte révélée : pas de brume de guerre</span>
-        </label>
-        <div class="panel-actions">
-          <button class="btn back" data-back>Retour</button>
-          <button id="startBtn" class="btn btn-accent big">Lever l'ancre</button>
+
+        <div id="menuSetup" class="mn-view mn-panel hidden">
+          <h2 class="mn-h">Nouvelle partie</h2>
+          <p class="mn-intro">Choisis ton culte, le nombre de rivaux et la taille de l'archipel.</p>
+          <fieldset class="mn-field">
+            <legend class="mn-label">Ton culte</legend>
+            <div id="factionPicker" class="mn-cults"></div>
+          </fieldset>
+          <div class="mn-pair">
+            <fieldset class="mn-field">
+              <legend class="mn-label">Cultes rivaux</legend>
+              <div id="rivalPicker" class="mn-seg"></div>
+            </fieldset>
+            <fieldset class="mn-field">
+              <legend class="mn-label">Archipel</legend>
+              <div id="sizePicker" class="mn-seg"></div>
+            </fieldset>
+          </div>
+          <fieldset class="mn-field mn-checks">
+            <legend class="mn-label">Options</legend>
+            <label class="mn-check"><input type="checkbox" id="sandbox" /><span class="box" aria-hidden="true"></span><span><b>Bac à sable</b> huile illimitée, fidèles sans limite</span></label>
+            <label class="mn-check"><input type="checkbox" id="reveal" /><span class="box" aria-hidden="true"></span><span><b>Carte révélée</b> pas de brume de guerre</span></label>
+          </fieldset>
+          <div class="mn-actions">
+            <button id="startBtn" class="mn-btn primary">Lever l'ancre <svg class="mn-arrow" viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><path d="M0 6h24M19 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.2" /></svg></button>
+            <button class="mn-btn ghost" data-back><svg class="mn-arrow back" viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><path d="M26 6H2M7 1L2 6l5 5" fill="none" stroke="currentColor" stroke-width="1.2" /></svg> Retour</button>
+          </div>
         </div>
-      </div>
 
-      <div id="menuRulesPanel" class="menu-panel hidden">
-        <h2>Comment jouer</h2>
-        <ul class="rules-list">
-          <li><b>Explore</b> l'archipel : la brume ne se lève qu'autour de tes fidèles et de tes cités.</li>
-          <li><b>Allume les sanctuaires</b> : reste un tour sur un sanctuaire, puis allumes-y le feu de ton culte.</li>
-          <li><b>Récolte</b> nacre, épaves et reliques dans ton territoire pour faire grandir tes cités.</li>
-          <li><b>Appelle des fidèles</b> dans tes cités et apprends les <b>savoirs interdits</b>.</li>
-          <li><b>La marée monte</b> tous les 3 tours à partir du tour 6 : certaines côtes s'enfoncent puis disparaissent.</li>
-          <li>Avec <b>Navigation</b>, tes fidèles prennent la mer en barque depuis une cité.</li>
-          <li>Gagne en éteignant tous les autres cultes, en réveillant le Dormeur, ou avec le meilleur score au tour 30.</li>
-        </ul>
-        <p class="keys">Glisser : déplacer la carte · Molette : zoom · Entrée : fin du tour · T : savoirs · Tab : unité suivante · Échap : désélectionner</p>
-        <div class="panel-actions"><button class="btn back" data-back>Retour</button></div>
-      </div>
-
-      <p class="menu-foot">Version 0.4 · Entrée pour commencer</p>
+        <div id="menuRulesPanel" class="mn-view mn-panel hidden">
+          <h2 class="mn-h">Comment jouer</h2>
+          <dl class="mn-rules">
+            <dt>Explorer</dt><dd>La brume ne se lève qu'autour de tes fidèles et de tes cités.</dd>
+            <dt>Sanctuaires</dt><dd>Reste un tour sur un sanctuaire, puis allumes-y le feu de ton culte.</dd>
+            <dt>Récoltes</dt><dd>Nacre, épaves et reliques font grandir les cités de ton territoire.</dd>
+            <dt>Fidèles</dt><dd>Appelle des fidèles dans tes cités et apprends les savoirs interdits.</dd>
+            <dt>Marée</dt><dd>Tous les trois tours à partir du tour 6, des côtes s'enfoncent puis disparaissent.</dd>
+            <dt>Navigation</dt><dd>Ce savoir permet à tes fidèles de prendre la mer en barque depuis une cité.</dd>
+            <dt>Victoire</dt><dd>Éteins tous les autres cultes, réveille le Dormeur, ou finis en tête au tour 30.</dd>
+          </dl>
+          <p class="mn-keys"><span><kbd>Glisser</kbd> déplacer</span><span><kbd>Molette</kbd> zoom</span><span><kbd>Entrée</kbd> fin du tour</span><span><kbd>T</kbd> savoirs</span><span><kbd>Tab</kbd> unité suivante</span><span><kbd>Échap</kbd> désélectionner</span></p>
+          <div class="mn-actions">
+            <button class="mn-btn ghost" data-back><svg class="mn-arrow back" viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><path d="M26 6H2M7 1L2 6l5 5" fill="none" stroke="currentColor" stroke-width="1.2" /></svg> Retour</button>
+          </div>
+        </div>
+      </main>
     </section>
 
-    <section id="endScreen" class="screen hidden">
-      <div class="start-card">
-        <h1 id="endTitle"></h1>
-        <p class="tagline" id="endReason"></p>
-        <table id="scoreTable" class="scores"></table>
-        <button id="restartBtn" class="btn btn-accent big">Nouvelle partie</button>
+    <section id="endScreen" class="mn-end hidden">
+      <div class="mn-end-card">
+        <h1 id="endTitle" class="mn-h"></h1>
+        <p class="mn-intro" id="endReason"></p>
+        <table id="scoreTable" class="mn-scores"></table>
+        <button id="restartBtn" class="mn-btn primary">Nouvelle partie <svg class="mn-arrow" viewBox="0 0 26 12" width="26" height="12" aria-hidden="true"><path d="M0 6h24M19 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.2" /></svg></button>
       </div>
     </section>
 

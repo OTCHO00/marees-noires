@@ -403,6 +403,11 @@ export function createMenuScene(canvas, { water } = {}) {
     const dist = centre.distanceTo(camPos);
     const halfW = dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
     view.target.copy(centre).addScaledVector(right, -halfW * view.shift);
+    // En portrait, on vise sous l'île pour qu'elle remonte dans le cadre.
+    if (view.lift) {
+      const up = new THREE.Vector3().crossVectors(right, toCentre).normalize();
+      view.target.addScaledVector(up, -dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * view.lift);
+    }
     return { right };
   }
 
@@ -414,7 +419,8 @@ export function createMenuScene(canvas, { water } = {}) {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     view.back = camera.aspect < 1.2 ? 10 : 0;
-    view.shift = camera.aspect < 1.2 ? 0 : 0.38;
+    view.shift = camera.aspect < 1.2 ? 0 : 0.56; // laisse la place à la colonne de menu
+    view.lift = camera.aspect < 0.8 ? 0.42 : 0;
     // La lune se place en haut à droite du cadre.
     const camPos = BASE_CAMERA.clone().add(new THREE.Vector3(0, view.back * 0.2, view.back));
     const { right } = frameView(camPos);

@@ -1,0 +1,736 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-13T18:01:09.425269+00:00",
+  "title": "Design System: Marées noires",
+  "extensions": {
+    "colorMeta": {
+      "lantern-amber": {
+        "role": "primary",
+        "displayName": "Lantern Amber",
+        "canonical": "#e8a33d",
+        "oklch": "oklch(76.5% 0.140 72.9)",
+        "tonalRamp": [
+          "#140800",
+          "#371f00",
+          "#5e3900",
+          "#885400",
+          "#b37200",
+          "#cf9950",
+          "#ebc18b",
+          "#ffe9c4"
+        ]
+      },
+      "lantern-amber-hi": {
+        "role": "primary",
+        "displayName": "Lantern Amber High",
+        "canonical": "#f2b75c",
+        "oklch": "oklch(81.6% 0.128 76.1)",
+        "tonalRamp": [
+          "#130900",
+          "#342100",
+          "#5a3b00",
+          "#835700",
+          "#ad7606",
+          "#ca9c58",
+          "#e7c390",
+          "#ffeac8"
+        ]
+      },
+      "on-amber": {
+        "role": "primary",
+        "displayName": "Tar Ink",
+        "canonical": "#171007",
+        "oklch": "oklch(17.9% 0.021 73.7)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#282420",
+          "#46413a",
+          "#676057",
+          "#8a8175",
+          "#aca49a",
+          "#cec8c0",
+          "#f2eee8"
+        ]
+      },
+      "night-ground": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "canonical": "#03090b",
+        "oklch": "oklch(13.2% 0.014 214.8)",
+        "tonalRamp": [
+          "#0a0c0c",
+          "#222627",
+          "#3d4345",
+          "#5a6365",
+          "#7a8587",
+          "#9ea7a9",
+          "#c3cbcc",
+          "#eaeff1"
+        ]
+      },
+      "fog-rail": {
+        "role": "neutral",
+        "displayName": "Fog Rail",
+        "canonical": "rgba(10, 20, 22, 0.88)",
+        "oklch": "oklch(18.2% 0.015 211.5)",
+        "tonalRamp": [
+          "#090c0c",
+          "#212627",
+          "#3c4345",
+          "#596365",
+          "#798587",
+          "#9da7a9",
+          "#c3cbcc",
+          "#eaf0f1"
+        ]
+      },
+      "hud-surface": {
+        "role": "neutral",
+        "displayName": "HUD Surface",
+        "canonical": "rgba(10, 20, 22, 0.9)",
+        "oklch": "oklch(18.2% 0.015 211.5)",
+        "tonalRamp": [
+          "#090c0c",
+          "#222627",
+          "#3d4345",
+          "#596366",
+          "#7a8587",
+          "#9fa7a8",
+          "#c5cacb",
+          "#eceff0"
+        ]
+      },
+      "field-well": {
+        "role": "neutral",
+        "displayName": "Field Well",
+        "canonical": "rgba(7, 15, 17, 0.7)",
+        "oklch": "oklch(16.1% 0.013 214.4)",
+        "tonalRamp": [
+          "#0a0c0c",
+          "#222627",
+          "#3d4345",
+          "#5b6365",
+          "#7a8587",
+          "#9ea7a9",
+          "#c4cbcc",
+          "#eaeff1"
+        ]
+      },
+      "deep-veil": {
+        "role": "neutral",
+        "displayName": "Deep Veil",
+        "canonical": "rgba(3, 9, 11, 0.96)",
+        "oklch": "oklch(13.2% 0.014 214.8)",
+        "tonalRamp": [
+          "#0a0c0c",
+          "#222627",
+          "#3d4345",
+          "#5a6365",
+          "#7b8487",
+          "#9fa6a8",
+          "#c6cacb",
+          "#eceff0"
+        ]
+      },
+      "plaster-ink": {
+        "role": "neutral",
+        "displayName": "Plaster Ink",
+        "canonical": "#e7e2d6",
+        "oklch": "oklch(91.3% 0.017 88.0)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#272521",
+          "#44423c",
+          "#646158",
+          "#868277",
+          "#a8a59c",
+          "#ccc9c2",
+          "#f0eee9"
+        ]
+      },
+      "ash": {
+        "role": "neutral",
+        "displayName": "Ash",
+        "canonical": "#b8b09f",
+        "oklch": "oklch(75.9% 0.025 85.8)",
+        "tonalRamp": [
+          "#0c0b08",
+          "#27251f",
+          "#464238",
+          "#676154",
+          "#898272",
+          "#aba497",
+          "#cec9be",
+          "#f2eee7"
+        ]
+      },
+      "faint-ink": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "rgba(231, 226, 214, 0.38)",
+        "oklch": "oklch(91.3% 0.017 88.0)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262522",
+          "#44423c",
+          "#656158",
+          "#868278",
+          "#a8a59e",
+          "#cbc9c5",
+          "#f0eeeb"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "rgba(231, 226, 214, 0.22)",
+        "oklch": "oklch(91.3% 0.017 88.0)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#272521",
+          "#44423c",
+          "#646158",
+          "#868277",
+          "#a8a59c",
+          "#ccc9c2",
+          "#f0eee9"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "rgba(231, 226, 214, 0.55)",
+        "oklch": "oklch(91.3% 0.017 88.0)",
+        "tonalRamp": [
+          "#0c0b09",
+          "#272521",
+          "#44423c",
+          "#646158",
+          "#868277",
+          "#a8a59c",
+          "#ccc9c2",
+          "#f0eee9"
+        ]
+      },
+      "vigil-green": {
+        "role": "neutral",
+        "displayName": "Vigil Green",
+        "canonical": "#8fc9a0",
+        "oklch": "oklch(78.5% 0.084 153.4)",
+        "tonalRamp": [
+          "#050e07",
+          "#19291e",
+          "#2b4a35",
+          "#3e6d4e",
+          "#5f8f6e",
+          "#8daf96",
+          "#bbcfc0",
+          "#e4f3e8"
+        ]
+      },
+      "tide-pale": {
+        "role": "neutral",
+        "displayName": "Tide Pale",
+        "canonical": "#9fc3c9",
+        "oklch": "oklch(79.3% 0.039 208.8)",
+        "tonalRamp": [
+          "#070c0d",
+          "#1d2729",
+          "#334649",
+          "#4a676c",
+          "#6b888d",
+          "#94aaad",
+          "#bfccce",
+          "#e7f0f2"
+        ]
+      },
+      "wound": {
+        "role": "neutral",
+        "displayName": "Wound",
+        "canonical": "#e58c7a",
+        "oklch": "oklch(72.9% 0.113 32.2)",
+        "tonalRamp": [
+          "#150705",
+          "#361d18",
+          "#62332a",
+          "#904a3c",
+          "#b56b5c",
+          "#cd958a",
+          "#e3c0b9",
+          "#ffe8e3"
+        ]
+      },
+      "cult-lanterne": {
+        "role": "tertiary",
+        "displayName": "Ordre de la Lanterne",
+        "canonical": "#e8a33d",
+        "oklch": "oklch(76.5% 0.140 72.9)",
+        "tonalRamp": [
+          "#140800",
+          "#371f00",
+          "#5e3900",
+          "#885400",
+          "#b37200",
+          "#cf9950",
+          "#ebc18b",
+          "#ffe9c4"
+        ]
+      },
+      "cult-recif": {
+        "role": "tertiary",
+        "displayName": "Enfants du Récif",
+        "canonical": "#7fd1b9",
+        "oklch": "oklch(80.1% 0.088 173.3)",
+        "tonalRamp": [
+          "#020e0a",
+          "#0d2b23",
+          "#1d4c3f",
+          "#2e6f5d",
+          "#42937e",
+          "#75b4a1",
+          "#a6d5c6",
+          "#d7f7ec"
+        ]
+      },
+      "cult-sang": {
+        "role": "tertiary",
+        "displayName": "Cercle de Sang",
+        "canonical": "#d9604f",
+        "oklch": "oklch(63.6% 0.156 30.1)",
+        "tonalRamp": [
+          "#190503",
+          "#401510",
+          "#6d2920",
+          "#9d3f32",
+          "#ce5847",
+          "#e88676",
+          "#ffb2a5",
+          "#ffdfd5"
+        ]
+      },
+      "cult-veilleurs": {
+        "role": "tertiary",
+        "displayName": "Veilleurs Pâles",
+        "canonical": "#a99bef",
+        "oklch": "oklch(73.4% 0.120 290.8)",
+        "tonalRamp": [
+          "#0b0917",
+          "#25203d",
+          "#423a67",
+          "#625695",
+          "#8374c4",
+          "#a59bdd",
+          "#c8c2f6",
+          "#eee9ff"
+        ]
+      },
+      "branch-mer": {
+        "role": "secondary",
+        "displayName": "La Mer",
+        "canonical": "#6f9fb8",
+        "oklch": "oklch(67.7% 0.063 231.6)",
+        "tonalRamp": [
+          "#050c11",
+          "#19272e",
+          "#2c4653",
+          "#3f677b",
+          "#60899e",
+          "#8daaba",
+          "#bbccd6",
+          "#e4f1f7"
+        ]
+      },
+      "branch-recoltes": {
+        "role": "secondary",
+        "displayName": "Les Récoltes",
+        "canonical": "#c9b98a",
+        "oklch": "oklch(78.8% 0.065 91.5)",
+        "tonalRamp": [
+          "#0e0b04",
+          "#292518",
+          "#4a4129",
+          "#6d603b",
+          "#8f825b",
+          "#aea589",
+          "#cfc9b8",
+          "#f2eee2"
+        ]
+      },
+      "branch-guerre": {
+        "role": "secondary",
+        "displayName": "La Guerre",
+        "canonical": "#a8664a",
+        "oklch": "oklch(57.7% 0.095 43.5)",
+        "tonalRamp": [
+          "#130804",
+          "#331f17",
+          "#5c3728",
+          "#885139",
+          "#ac7259",
+          "#c69a88",
+          "#dec3b7",
+          "#fdeae2"
+        ]
+      },
+      "branch-lumiere": {
+        "role": "secondary",
+        "displayName": "La Lumière",
+        "canonical": "#e2d3a3",
+        "oklch": "oklch(86.7% 0.065 92.8)",
+        "tonalRamp": [
+          "#0d0b04",
+          "#292518",
+          "#494229",
+          "#6c613b",
+          "#8e825b",
+          "#aea589",
+          "#cec9b8",
+          "#f2eee3"
+        ]
+      },
+      "branch-foi": {
+        "role": "secondary",
+        "displayName": "La Foi",
+        "canonical": "#93a77f",
+        "oklch": "oklch(70.2% 0.061 129.5)",
+        "tonalRamp": [
+          "#090c06",
+          "#22271c",
+          "#3c4631",
+          "#586747",
+          "#788967",
+          "#9eaa91",
+          "#c4ccbd",
+          "#ebf1e6"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Game title on the home view only; settles from 0.12em tracking on load."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Panel and end-screen titles, followed by a 40px strong hairline."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Cult names on menu cards and the rail tide note."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Right-aligned scores in the end table, the HUD stats grid and floating combat numbers; tabular figures."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The one sentence under the home title, max 27em."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Panel intros (ash) and rule definitions (ink)."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Menu button text; nav and segments use 13px at weight 400 with 0.24em / 0.2em."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field legends and rule terms on a hairline, in ash."
+      },
+      "hud-headline": {
+        "displayName": "HUD Headline",
+        "purpose": "Tech tree title, followed by the 40px strong hairline."
+      },
+      "hud-counter": {
+        "displayName": "HUD Counter",
+        "purpose": "Oil total and turn number in the top corners; 26px under 860px."
+      },
+      "hud-title": {
+        "displayName": "HUD Title",
+        "purpose": "Selection panel and tech card titles, each followed by the 40px rule."
+      },
+      "hud-name": {
+        "displayName": "HUD Name",
+        "purpose": "Recruit names; city names use 15px, lore lines 16px, registry scores 20px."
+      },
+      "hud-body": {
+        "displayName": "HUD Body",
+        "purpose": "Panel paragraphs, tech descriptions, toasts and the banner."
+      },
+      "hud-note": {
+        "displayName": "HUD Note",
+        "purpose": "Notes, tooltip body, tech count, recruit costs (500, ink), plates at 12px."
+      },
+      "hud-button": {
+        "displayName": "HUD Button",
+        "purpose": "HUD button text in spaced capitals; 13px on the large variant."
+      },
+      "hud-label": {
+        "displayName": "HUD Label",
+        "purpose": "Faction name, stat captions, tide line, registry tab, section heads, tile captions, tech meta, price tags."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating-number-legibility",
+        "value": "text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85)",
+        "purpose": "Named exception to the No Shadow Rule: only on Bellefair numbers floating over the 3D scene in world space, where no surface sits behind them. Never on cards, controls or labels."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-settle",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The single easing for every transition and entrance."
+      },
+      {
+        "name": "duration-color",
+        "value": "0.3s",
+        "purpose": "Color, border and fill changes on controls."
+      },
+      {
+        "name": "duration-arrow",
+        "value": "0.35s",
+        "purpose": "SVG arrow slides 5px on button hover."
+      },
+      {
+        "name": "duration-dot",
+        "value": "0.45s",
+        "purpose": "Rail nav dot glides to the hovered or focused item."
+      },
+      {
+        "name": "duration-veil",
+        "value": "0.6s",
+        "purpose": "Reading veil densifies when a panel opens."
+      },
+      {
+        "name": "view-enter",
+        "value": "0.7s fade + blur(6px) + translateY(10px)",
+        "purpose": "Views cross-fade in place; end screen uses 0.8s."
+      },
+      {
+        "name": "title-settle",
+        "value": "1.6s letter-spacing 0.12em to rest",
+        "purpose": "The home title settles on load."
+      },
+      {
+        "name": "hud-rise",
+        "value": "0.45s translateY(8px) + fade",
+        "purpose": "Selection panel and turn banner entrance."
+      },
+      {
+        "name": "toast-in",
+        "value": "0.45s translateY(10px) + fade; out 0.4s translateY(6px) + fade",
+        "purpose": "Toast entrance and exit."
+      },
+      {
+        "name": "end-turn-ripple",
+        "value": "2.2s infinite, 1px amber ring inset -1px to -14px, opacity 0.9 to 0",
+        "purpose": "Invites ending the turn when nothing is left to do."
+      },
+      {
+        "name": "chevron-fold",
+        "value": "0.3s rotate(-90deg)",
+        "purpose": "Registry chevron when the registry folds."
+      },
+      {
+        "name": "tech-sky-fade",
+        "value": "0.4s fade",
+        "purpose": "Tech tree layer entrance."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition: none",
+        "purpose": "All menu and HUD motion removed under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "short",
+        "value": "max-height: 760px"
+      },
+      {
+        "name": "narrow-menu",
+        "value": "max-width: 980px"
+      },
+      {
+        "name": "narrow-hud",
+        "value": "max-width: 860px"
+      }
+    ],
+    "scope": {
+      "covers": [
+        "index.html #startScreen",
+        "index.html #endScreen",
+        "src/ui/menu.css",
+        "index.html #hud, #panel, #tooltip, #toasts, #banner, #techModal",
+        "src/style.css",
+        "src/ui/hud.js",
+        "src/ui/sigil.js (line: true)",
+        "src/core/data.js BRANCHES",
+        "HTML overlay in src/three/renderer3d.js (.plate, .clabel, .float)"
+      ],
+      "fonts": "Bellefair and Jost only, self-hosted from public/fonts via @font-face (menu.css and style.css).",
+      "unused": "src/ui/sigil.js filled, haloed variant (line: false) is not called by any UI and is not part of the system.",
+      "notTokens": "src/three/* follow the approved art direction \"Lanterne & Brume\"."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single filled action per view; amber, square, tracked capitals, SVG arrow.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Nouvelle partie <svg class=\"ds-arrow\" viewBox=\"0 0 26 12\" width=\"26\" height=\"12\" aria-hidden=\"true\"><path d=\"M0 6h24M19 1l5 5-5 5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\"/></svg></button>",
+      "css": ".ds-btn{--mn-ground:#03090b;--mn-rail:rgba(10,20,22,.88);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);height:58px;padding:0 30px;display:inline-flex;align-items:center;gap:18px;font:500 13px/1 var(--mn-sans);letter-spacing:.28em;text-transform:uppercase;border-radius:0;cursor:pointer;transition:background .3s var(--mn-ease),color .3s var(--mn-ease),border-color .3s var(--mn-ease);} .ds-arrow{flex:none;transition:transform .35s var(--mn-ease);} .ds-btn:hover .ds-arrow{transform:translateX(5px);} .ds-btn:active{transform:translateY(1px);} .ds-btn:focus-visible{outline:1px solid var(--mn-ink);outline-offset:4px;} .ds-btn-primary{color:var(--mn-on-amber);background:var(--mn-amber);border:1px solid var(--mn-amber);} .ds-btn-primary:hover{background:var(--mn-amber-hi);border-color:var(--mn-amber-hi);}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Every secondary action: strong hairline frame on translucent night.",
+      "html": "<button class=\"ds-btn ds-btn-ghost\">Bac à sable <svg class=\"ds-arrow\" viewBox=\"0 0 26 12\" width=\"26\" height=\"12\" aria-hidden=\"true\"><path d=\"M0 6h24M19 1l5 5-5 5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\"/></svg></button>",
+      "css": ".ds-btn{--mn-ground:#03090b;--mn-rail:rgba(10,20,22,.88);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);height:58px;padding:0 30px;display:inline-flex;align-items:center;gap:18px;font:500 13px/1 var(--mn-sans);letter-spacing:.28em;text-transform:uppercase;border-radius:0;cursor:pointer;transition:background .3s var(--mn-ease),color .3s var(--mn-ease),border-color .3s var(--mn-ease);} .ds-arrow{flex:none;transition:transform .35s var(--mn-ease);} .ds-btn:hover .ds-arrow{transform:translateX(5px);} .ds-btn:active{transform:translateY(1px);} .ds-btn:focus-visible{outline:1px solid var(--mn-ink);outline-offset:4px;} .ds-btn-ghost{color:var(--mn-ink);background:rgba(3,9,11,.35);border:1px solid var(--mn-line-strong);} .ds-btn-ghost:hover{border-color:var(--mn-ink);background:rgba(231,226,214,.06);}"
+    },
+    {
+      "name": "Rail Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Vertical spaced-caps nav on the fog rail; a single dot glides to the hovered item.",
+      "html": "<nav class=\"ds-rail\"><span class=\"ds-dot\"></span><button class=\"on\">Accueil</button><button>Nouvelle partie</button><button>Bac à sable</button><button>Comment jouer</button></nav>",
+      "css": ".ds-rail{--mn-ground:#03090b;--mn-rail:rgba(10,20,22,.88);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);position:relative;display:flex;flex-direction:column;width:192px;padding:16px 36px;background:var(--mn-rail);border-right:1px solid var(--mn-line);} .ds-rail button{padding:14px 0 14px 26px;text-align:left;font:400 13px/1 var(--mn-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--mn-ash);background:none;border:0;cursor:pointer;transition:color .3s var(--mn-ease);} .ds-rail button:hover,.ds-rail button.on{color:var(--mn-ink);} .ds-rail button:focus-visible{outline:1px solid var(--mn-ink);outline-offset:4px;} .ds-dot{position:absolute;left:38px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--mn-ink);transform:translateY(17px);transition:transform .45s var(--mn-ease);} .ds-rail:has(button:nth-of-type(2):hover) .ds-dot{transform:translateY(58px);} .ds-rail:has(button:nth-of-type(3):hover) .ds-dot{transform:translateY(99px);} .ds-rail:has(button:nth-of-type(4):hover) .ds-dot{transform:translateY(140px);}"
+    },
+    {
+      "name": "Segmented Choice",
+      "kind": "chip",
+      "refersTo": "segment",
+      "description": "A row of hairline cells; the chosen one takes amber stroke and text.",
+      "html": "<div class=\"ds-seg\"><button>1</button><button class=\"on\">2</button><button>3</button></div>",
+      "css": ".ds-seg{--mn-ground:#03090b;--mn-rail:rgba(10,20,22,.88);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);display:flex;width:280px;} .ds-seg button{flex:1;height:48px;font:400 13px/1 var(--mn-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--mn-ash);background:rgba(7,15,17,.7);border:1px solid var(--mn-line);border-radius:0;cursor:pointer;transition:color .3s var(--mn-ease),border-color .3s var(--mn-ease),background .3s var(--mn-ease);} .ds-seg button+button{margin-left:-1px;} .ds-seg button:hover{color:var(--mn-ink);} .ds-seg button.on{position:relative;z-index:1;color:var(--mn-amber);background:rgba(232,163,61,.08);border-color:var(--mn-amber);} .ds-seg button:focus-visible{outline:1px solid var(--mn-ink);outline-offset:4px;}"
+    },
+    {
+      "name": "Cult Card",
+      "kind": "card",
+      "refersTo": "cult-card",
+      "description": "Hairline choice card with a hairline sigil; the selected cult takes its own light.",
+      "html": "<div class=\"ds-cults\"><button class=\"ds-cult on\" style=\"--pick:#E8A33D\"><svg viewBox=\"-30 -30 60 60\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle r=\"22\" fill=\"none\" stroke=\"#E8A33D\" stroke-width=\"1.2\"/><rect x=\"-6\" y=\"-9\" width=\"12\" height=\"16\" rx=\"2\" fill=\"none\" stroke=\"#E8A33D\" stroke-width=\"1.5\"/><path d=\"M-4 -9 L0 -15 L4 -9\" fill=\"none\" stroke=\"#E8A33D\" stroke-width=\"1.5\"/></svg><span class=\"nm\">Ordre de la Lanterne</span><span class=\"mt\">« Tant qu’une flamme brûle, la mer n’a pas gagné. »</span></button><button class=\"ds-cult\" style=\"--pick:#7FD1B9\"><svg viewBox=\"-30 -30 60 60\" width=\"40\" height=\"40\" aria-hidden=\"true\"><circle r=\"22\" fill=\"none\" stroke=\"#7FD1B9\" stroke-width=\"1.2\"/><path d=\"M0 12 L0 -12 M-8 -10 L-8 -2 Q-8 4 0 4 Q8 4 8 -2 L8 -10\" fill=\"none\" stroke=\"#7FD1B9\" stroke-width=\"1.5\"/></svg><span class=\"nm\">Enfants du Récif</span><span class=\"mt\">« Nous sommes nés de l’eau, nous y retournerons. »</span></button></div>",
+      "css": ".ds-cults{--mn-ground:#03090b;--mn-rail:rgba(10,20,22,.88);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);display:grid;grid-template-columns:1fr 1fr;gap:12px;width:560px;} .ds-cult{display:grid;grid-template-columns:40px 1fr;grid-template-rows:auto auto;column-gap:16px;row-gap:4px;align-items:center;padding:16px 18px;text-align:left;color:var(--mn-ink);background:rgba(7,15,17,.7);border:1px solid var(--mn-line);border-radius:0;cursor:pointer;transition:border-color .3s var(--mn-ease),background .3s var(--mn-ease);} .ds-cult svg{grid-row:1/3;} .ds-cult .nm{font-family:var(--mn-display);font-size:21px;line-height:1.15;} .ds-cult .mt{font:300 13px/1.45 var(--mn-sans);color:var(--mn-ash);} .ds-cult:hover{border-color:var(--mn-line-strong);} .ds-cult.on{border-color:var(--pick);background:color-mix(in srgb,var(--pick) 9%,rgba(7,15,17,.8));} .ds-cult:focus-visible{outline:1px solid var(--mn-ink);outline-offset:4px;}"
+    },
+    {
+      "name": "HUD Icon Tiles",
+      "kind": "button",
+      "refersTo": "icon-tile",
+      "description": "Square hairline tiles with a drawn icon and caption; only Fin du tour is amber, with a ripple when the turn is ready to end.",
+      "html": "<div class=\"ds-tiles\"><button class=\"ds-tile\"><span class=\"disc\"><svg viewBox=\"0 0 24 24\" width=\"28\" height=\"28\" aria-hidden=\"true\"><path d=\"M4 5.5 Q8 3.5 12 5.5 Q16 3.5 20 5.5 V19 Q16 17 12 19 Q8 17 4 19Z M12 5.5 V19\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" stroke-linejoin=\"round\"/></svg></span>Savoirs</button><button class=\"ds-tile accent big pulse\"><span class=\"disc\"><svg viewBox=\"0 0 24 24\" width=\"34\" height=\"34\" aria-hidden=\"true\"><path d=\"M5 12.5 L10 17.5 L19 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/></svg></span>Fin du tour</button></div>",
+      "css": ".ds-tiles{--mn-ground:#03090b;--mn-surface:rgba(10,20,22,.9);--mn-well:rgba(7,15,17,.7);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-faint:rgba(231,226,214,.38);--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);display:flex;align-items:flex-end;gap:16px;padding:20px;background:#03090b;} .ds-tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:0;font:500 11px var(--mn-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--mn-ash);background:none;border:0;cursor:pointer;transition:color .3s var(--mn-ease);} .ds-tile:hover{color:var(--mn-ink);} .ds-tile .disc{position:relative;width:56px;height:56px;display:grid;place-items:center;color:var(--mn-ink);background:var(--mn-surface);border:1px solid var(--mn-line-strong);transition:background .3s var(--mn-ease),border-color .3s var(--mn-ease);} .ds-tile:hover .disc{border-color:var(--mn-ink);} .ds-tile:active .disc{transform:translateY(1px);} .ds-tile:focus-visible{outline:1px solid var(--mn-ink);outline-offset:4px;} .ds-tile.big .disc{width:76px;height:76px;} .ds-tile.accent{color:var(--mn-ink);} .ds-tile.accent .disc{color:var(--mn-on-amber);background:var(--mn-amber);border-color:var(--mn-amber);} .ds-tile.accent:hover .disc{background:var(--mn-amber-hi);border-color:var(--mn-amber-hi);} .ds-tile.pulse .disc::after{content:'';position:absolute;inset:-1px;border:1px solid var(--mn-amber);animation:ds-ripple 2.2s var(--mn-ease) infinite;pointer-events:none;} @keyframes ds-ripple{from{inset:-1px;opacity:.9}to{inset:-14px;opacity:0}} @media (prefers-reduced-motion:reduce){.ds-tile .disc::after{animation:none;}}"
+    },
+    {
+      "name": "HUD Buttons",
+      "kind": "button",
+      "refersTo": "hud-button",
+      "description": "44px hairline buttons in the selection panel; the offered action (capture, learn) is amber with a Tar Ink drop.",
+      "html": "<div class=\"ds-hb\"><button class=\"ds-hbtn accent\">Allumer le feu</button><button class=\"ds-hbtn\">Veiller</button><button class=\"ds-hbtn\">Sacrifier · +5 <span class=\"ds-oil\"></span></button><button class=\"ds-hbtn\" disabled>Navire noir · 8 <span class=\"ds-oil\"></span></button></div>",
+      "css": ".ds-hb{--mn-ground:#03090b;--mn-surface:rgba(10,20,22,.9);--mn-well:rgba(7,15,17,.7);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-faint:rgba(231,226,214,.38);--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);display:flex;flex-wrap:wrap;gap:8px;width:360px;padding:20px;background:var(--mn-surface);} .ds-hbtn{height:44px;padding:0 20px;display:inline-flex;align-items:center;gap:8px;font:500 12px/1 var(--mn-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--mn-ink);background:var(--mn-well);border:1px solid var(--mn-line-strong);border-radius:0;cursor:pointer;white-space:nowrap;transition:background .3s var(--mn-ease),border-color .3s var(--mn-ease);} .ds-hbtn:hover:not(:disabled){border-color:var(--mn-ink);background:rgba(231,226,214,.06);} .ds-hbtn:active:not(:disabled){transform:translateY(1px);} .ds-hbtn:disabled{opacity:.4;cursor:not-allowed;} .ds-hbtn:focus-visible{outline:1px solid var(--mn-ink);outline-offset:4px;} .ds-hbtn.accent{color:var(--mn-on-amber);background:var(--mn-amber);border-color:var(--mn-amber);} .ds-hbtn.accent:hover{background:var(--mn-amber-hi);border-color:var(--mn-amber-hi);} .ds-oil{display:inline-block;width:8px;height:11px;background:var(--mn-amber);-webkit-mask:no-repeat center/contain url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 11'%3E%3Cpath d='M4 0C5.6 3 8 5 8 7a4 4 0 0 1-8 0c0-2 2.4-4 4-7z'/%3E%3C/svg%3E\");mask:no-repeat center/contain url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 11'%3E%3Cpath d='M4 0C5.6 3 8 5 8 7a4 4 0 0 1-8 0c0-2 2.4-4 4-7z'/%3E%3C/svg%3E\");} .ds-hbtn.accent .ds-oil{background:var(--mn-on-amber);}"
+    },
+    {
+      "name": "Turn and Tide Card",
+      "kind": "card",
+      "refersTo": "corner-card",
+      "description": "Top-right corner card: Bellefair turn counter over the stretched tide gauge in Tide Pale; the stage figure never turns amber.",
+      "html": "<div class=\"ds-tr\"><p class=\"ds-stat\"><span>Tour</span><b>7</b><span>/ 30</span></p><div class=\"ds-tide\"><span>Marée · stade <b>2</b> dans 2 tours</span><svg viewBox=\"0 0 220 34\" width=\"220\" height=\"34\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><defs><linearGradient id=\"dsw\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#9fc3c9\" stop-opacity=\"0.75\"/><stop offset=\"1\" stop-color=\"#9fc3c9\" stop-opacity=\"0.15\"/></linearGradient><clipPath id=\"dsc\"><rect x=\"0\" y=\"0\" width=\"130\" height=\"34\"/></clipPath></defs><rect x=\"0.5\" y=\"0.5\" width=\"219\" height=\"33\" fill=\"#03090b\" stroke=\"rgba(231,226,214,0.22)\"/><path clip-path=\"url(#dsc)\" d=\"M2 17 Q20 11 38 17 T74 17 T110 17 T146 17 T182 17 T218 17 L218 33 L2 33Z\" fill=\"url(#dsw)\"/></svg></div></div>",
+      "css": ".ds-tr{--mn-ground:#03090b;--mn-surface:rgba(10,20,22,.9);--mn-well:rgba(7,15,17,.7);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-faint:rgba(231,226,214,.38);--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);width:252px;display:flex;flex-direction:column;align-items:flex-end;gap:12px;padding:14px 18px 16px;background:var(--mn-surface);border:1px solid var(--mn-line);color:var(--mn-ink);font-family:var(--mn-sans);} .ds-stat{margin:0;display:flex;align-items:baseline;gap:8px;} .ds-stat b{font:400 34px/1 var(--mn-display);font-variant-numeric:tabular-nums;} .ds-stat span,.ds-tide{font-weight:500;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--mn-ash);} .ds-tide{align-self:stretch;display:flex;flex-direction:column;align-items:flex-end;gap:8px;white-space:nowrap;} .ds-tide span{letter-spacing:.16em;} .ds-tide b{font-weight:500;color:#9fc3c9;} .ds-tide.soon b{color:var(--mn-ink);text-decoration:underline;text-decoration-color:#9fc3c9;text-underline-offset:4px;} .ds-tide svg{width:100%;height:14px;}"
+    },
+    {
+      "name": "Selection Panel",
+      "kind": "card",
+      "refersTo": "selection-panel",
+      "description": "Bottom-left panel: title with rule, owner swatch, 3px bars, stats grid and recruit tiles with a disabled state.",
+      "html": "<aside class=\"ds-panel\" style=\"--pc:#E8A33D\"><h2>Port-Lanterne<small>Capitale</small></h2><p class=\"owner\">Ordre de la Lanterne</p><p>Niveau <b>2</b> · produit <b>3</b> <span class=\"ds-oil\"></span> par tour</p><div class=\"pop\"><span class=\"on\"></span><span class=\"on\"></span><span></span></div><div class=\"stats\"><div><b>10</b>PV</div><div><b>2</b>Att</div><div><b>2</b>Déf</div><div><b>1</b>Mvt</div></div><h3>Appeler un fidèle</h3><div class=\"recruits\"><button class=\"recruit\"><span class=\"name\">Fidèle<span class=\"cost\">2<span class=\"ds-oil\"></span></span></span><span class=\"mini\">10 PV · 2 att</span></button><button class=\"recruit\" disabled><span class=\"name\">Prêtre<span class=\"cost\">6<span class=\"ds-oil\"></span></span></span><span class=\"mini\">Savoir requis</span></button></div></aside>",
+      "css": ".ds-panel{--mn-ground:#03090b;--mn-surface:rgba(10,20,22,.9);--mn-well:rgba(7,15,17,.7);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-faint:rgba(231,226,214,.38);--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);width:360px;padding:20px 22px 22px;background:var(--mn-surface);border:1px solid var(--mn-line);color:var(--mn-ink);font-family:var(--mn-sans);} .ds-panel h2{margin:0;font:400 28px/1.1 var(--mn-display);} .ds-panel h2 small{display:block;margin-top:6px;font:500 11px var(--mn-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--mn-ash);} .ds-panel h2::after{content:'';display:block;width:40px;height:1px;margin-top:14px;background:var(--mn-line-strong);} .ds-panel .owner{margin:8px 0 4px;display:flex;align-items:center;gap:10px;font-size:11px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;} .ds-panel .owner::before{content:'';width:8px;height:8px;background:var(--pc);} .ds-panel p{margin:10px 0;font-size:14px;font-weight:300;line-height:1.55;} .ds-panel b{font-weight:500;} .ds-panel .pop{display:flex;gap:4px;margin:12px 0;} .ds-panel .pop span{flex:1;height:3px;background:var(--mn-line);} .ds-panel .pop span.on{background:var(--pc);} .ds-panel .stats{display:grid;grid-template-columns:repeat(4,1fr);margin:12px 0;border:1px solid var(--mn-line);} .ds-panel .stats div{padding:8px 0 7px;text-align:center;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mn-ash);} .ds-panel .stats div+div{border-left:1px solid var(--mn-line);} .ds-panel .stats b{display:block;margin-bottom:2px;font:400 22px var(--mn-display);letter-spacing:0;color:var(--mn-ink);} .ds-panel h3{margin:20px 0 0;padding-top:14px;border-top:1px solid var(--mn-line);font-size:11px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--mn-ash);} .ds-panel .recruits{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;} .ds-panel .recruit{display:flex;flex-direction:column;gap:4px;min-height:58px;padding:10px 12px;text-align:left;font-family:var(--mn-sans);color:var(--mn-ink);background:var(--mn-well);border:1px solid var(--mn-line);cursor:pointer;transition:border-color .3s var(--mn-ease),background .3s var(--mn-ease);} .ds-panel .recruit:hover:not(:disabled){border-color:var(--mn-line-strong);background:rgba(231,226,214,.05);} .ds-panel .recruit:focus-visible{outline:1px solid var(--mn-ink);outline-offset:4px;} .ds-panel .recruit:disabled{cursor:not-allowed;border-color:rgba(231,226,214,.1);} .ds-panel .recruit:disabled .name{color:var(--mn-faint);} .ds-panel .recruit:disabled .cost{opacity:.4;} .ds-panel .name{display:flex;justify-content:space-between;align-items:center;font:400 17px var(--mn-display);} .ds-panel .cost{display:flex;align-items:center;gap:3px;font:500 13px var(--mn-sans);color:var(--mn-ink);} .ds-panel .mini{font-size:12px;color:var(--mn-ash);} .ds-oil{display:inline-block;width:8px;height:11px;margin-left:2px;background:var(--mn-amber);vertical-align:-1px;-webkit-mask:no-repeat center/contain url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 11'%3E%3Cpath d='M4 0C5.6 3 8 5 8 7a4 4 0 0 1-8 0c0-2 2.4-4 4-7z'/%3E%3C/svg%3E\");mask:no-repeat center/contain url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 11'%3E%3Cpath d='M4 0C5.6 3 8 5 8 7a4 4 0 0 1-8 0c0-2 2.4-4 4-7z'/%3E%3C/svg%3E\");}"
+    },
+    {
+      "name": "Toast and Tooltip",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Toasts lead with a 6px cult swatch; the tooltip joins attacker and target with a drawn arrow.",
+      "html": "<div class=\"ds-tt\"><div class=\"ds-toast\" style=\"--c:#D9604F\">Cercle de Sang ont pris Brisants.</div><div class=\"ds-tip\"><small>Fidèle <svg viewBox=\"0 0 26 12\" width=\"18\" height=\"9\" aria-hidden=\"true\"><path d=\"M0 6h24M19 1l5 5-5 5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\"/></svg> Guetteur</small><span>Inflige <b class=\"hit\">4</b></span></div></div>",
+      "css": ".ds-tt{--mn-ground:#03090b;--mn-surface:rgba(10,20,22,.9);--mn-well:rgba(7,15,17,.7);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-faint:rgba(231,226,214,.38);--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:20px;background:#03090b;color:var(--mn-ink);font-family:var(--mn-sans);} .ds-toast{display:flex;align-items:center;gap:12px;padding:12px 18px;font-size:14px;font-weight:300;line-height:1.4;background:var(--mn-surface);border:1px solid var(--mn-line);animation:ds-tin .45s var(--mn-ease);} .ds-toast::before{content:'';flex:none;width:6px;height:6px;background:var(--c);} @keyframes ds-tin{from{opacity:0;transform:translateY(10px)}} .ds-tip{display:flex;flex-direction:column;gap:4px;padding:10px 14px;font-size:13px;background:var(--mn-surface);border:1px solid var(--mn-line-strong);} .ds-tip small{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--mn-ash);} .ds-tip .hit{font-weight:500;color:#e58c7a;}"
+    },
+    {
+      "name": "Tech Tree Node and Card",
+      "kind": "custom",
+      "refersTo": "tech-node",
+      "description": "Hairline circular nodes in branch lights with an outlined price tag, 1.2px links, and the tech card with meta below the title.",
+      "html": "<div class=\"ds-sky\"><svg class=\"links\" width=\"300\" height=\"120\" aria-hidden=\"true\"><line x1=\"50\" y1=\"60\" x2=\"150\" y2=\"60\" stroke=\"#6f9fb8\" stroke-width=\"1.2\"/><line x1=\"150\" y1=\"60\" x2=\"250\" y2=\"60\" stroke=\"rgba(231,226,214,0.22)\" stroke-width=\"1.2\"/></svg><button class=\"node owned\" style=\"left:50px;--c:#6f9fb8\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><path d=\"M4 15 Q8 11 12 15 T20 15\" fill=\"none\" stroke=\"#03090b\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg></button><button class=\"node available\" style=\"left:150px;--c:#6f9fb8\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><path d=\"M4 15 Q8 11 12 15 T20 15\" fill=\"none\" stroke=\"#6f9fb8\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg><span class=\"price\">6</span></button><button class=\"node locked\" style=\"left:250px;--c:#6f9fb8\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><path d=\"M4 15 Q8 11 12 15 T20 15\" fill=\"none\" stroke=\"rgba(231,226,214,0.38)\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg></button><div class=\"card\" style=\"--c:#6f9fb8\"><h3>Abysses<small class=\"meta\">La Mer · rang 2</small></h3><p>Naviguer au-dessus des eaux profondes.</p><em>Là où la sonde ne touche plus le fond, quelque chose nous écoute.</em><button class=\"learn\">Apprendre · 6 <span class=\"ds-oil\"></span></button></div></div>",
+      "css": ".ds-sky{--mn-ground:#03090b;--mn-surface:rgba(10,20,22,.9);--mn-well:rgba(7,15,17,.7);--mn-ink:#e7e2d6;--mn-ash:#b8b09f;--mn-faint:rgba(231,226,214,.38);--mn-line:rgba(231,226,214,.22);--mn-line-strong:rgba(231,226,214,.55);--mn-amber:#e8a33d;--mn-amber-hi:#f2b75c;--mn-on-amber:#171007;--mn-display:'Bellefair','Times New Roman',serif;--mn-sans:'Jost','Helvetica Neue',Arial,sans-serif;--mn-ease:cubic-bezier(0.16,1,0.3,1);position:relative;width:640px;height:420px;background:rgba(3,9,11,.96);color:var(--mn-ink);font-family:var(--mn-sans);} .ds-sky .links{position:absolute;left:0;top:0;} .ds-sky .node{position:absolute;top:60px;width:54px;height:54px;transform:translate(-50%,-50%);display:grid;place-items:center;padding:0;border-radius:50%;background:var(--mn-ground);border:1px solid var(--mn-line);cursor:pointer;transition:border-color .3s var(--mn-ease),background .3s var(--mn-ease);} .ds-sky .node:hover{border-color:var(--mn-line-strong);} .ds-sky .node.owned{background:var(--c);border-color:var(--c);} .ds-sky .node.available{border:1.5px solid var(--c);} .ds-sky .node:focus-visible{outline:1px solid var(--mn-ink);outline-offset:4px;} .ds-sky .price{position:absolute;right:-10px;top:-6px;min-width:20px;height:18px;padding:0 5px;display:grid;place-items:center;font-size:11px;font-weight:500;color:var(--mn-ink);background:var(--mn-ground);border:1px solid var(--mn-line-strong);} .ds-sky .card{position:absolute;right:20px;bottom:20px;width:330px;padding:26px;display:flex;flex-direction:column;gap:16px;background:var(--mn-surface);border:1px solid var(--mn-line);} .ds-sky h3{margin:0;font:400 28px/1.1 var(--mn-display);} .ds-sky .meta{display:block;margin-top:10px;font:500 11px var(--mn-sans);letter-spacing:.24em;text-transform:uppercase;color:var(--c);} .ds-sky h3::after{content:'';display:block;width:40px;height:1px;margin-top:14px;background:var(--mn-line-strong);} .ds-sky p{margin:0;font-size:14px;font-weight:300;line-height:1.6;} .ds-sky em{display:block;padding-top:12px;border-top:1px solid var(--mn-line);font:normal 16px/1.45 var(--mn-display);color:var(--mn-ash);} .ds-sky .learn{height:50px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font:500 12px/1 var(--mn-sans);letter-spacing:.22em;text-transform:uppercase;color:var(--mn-on-amber);background:var(--mn-amber);border:1px solid var(--mn-amber);cursor:pointer;transition:background .3s var(--mn-ease);} .ds-sky .learn:hover{background:var(--mn-amber-hi);border-color:var(--mn-amber-hi);} .ds-oil{display:inline-block;width:8px;height:11px;background:var(--mn-on-amber);-webkit-mask:no-repeat center/contain url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 11'%3E%3Cpath d='M4 0C5.6 3 8 5 8 7a4 4 0 0 1-8 0c0-2 2.4-4 4-7z'/%3E%3C/svg%3E\");mask:no-repeat center/contain url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 11'%3E%3Cpath d='M4 0C5.6 3 8 5 8 7a4 4 0 0 1-8 0c0-2 2.4-4 4-7z'/%3E%3C/svg%3E\");}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Alcove Around the Lighthouse",
+    "overview": "Ikebana restraint transposed to a night sea. The lit island and its lighthouse in the live 3D scene are the one branch of the arrangement; the interface is the quiet alcove around it, and emptiness does the work. Everything the UI adds is a hairline, a spaced capital, or a large, light serif word set on fog; nothing glows, nothing is rounded except where the world itself draws a circle, nothing is stacked into a column of heavy buttons.\n\nDensity follows the surface. The menu is low and deliberate: a full-height fog rail on the left, a main column with one display title, one sentence of lede and a short row of actions, and the right third left to the island. In play, the same alcove becomes four quiet corners around the map: identity and oil top left, turn and tide top right with the cult registry beneath, minimap and two square action tiles bottom right, and the selection panel rising bottom left. The map stays open in the middle. Dread comes from darkness, silence and precision, not ornament.\n\nWarm color is meaningful. Lantern amber marks the action you are invited to take; each cult's own light colors its sigil, its name in the registry, its swatches and its plates. The five branches of forbidden knowledge have their own muted, earthy lights that never repeat a cult color or amber. Everything else is plaster-colored ink and ash on near-black fog.",
+    "keyCharacteristics": [
+      "Near-black fog surfaces, translucent over the live 3D scene in both menu and play.",
+      "Bellefair for words that name things and for counted numbers; Jost in letter-spaced capitals for everything you press or read as a label.",
+      "Square-cornered hairline controls and cards; amber fills only the action being offered.",
+      "No shadows and no glows; the single exception is the legibility shadow under floating combat numbers.",
+      "Arrows, chevrons, ticks, oil drops and sigils are drawn (SVG or CSS mask), never typed.",
+      "Slow, settling motion on one long-tailed ease."
+    ],
+    "rules": [
+      {
+        "name": "The One Lantern Rule",
+        "body": "Amber fills only an action being offered: the primary button, the end-turn tile, the learn button, the capture action, and checked or selected marks. Oil numerals and recruit costs stay ink; the only resting amber that is not an action is the small drawn oil drop. If amber is on something that cannot be pressed or chosen, remove it.",
+        "section": "colors"
+      },
+      {
+        "name": "The Cult Light Rule",
+        "body": "A cult color appears only where that cult is being identified: its sigil, its name, its swatch, its plates and pips. Never as a section color, a status color or ornament; status has its own colors (Vigil Green, Tide Pale, Wound).",
+        "section": "colors"
+      },
+      {
+        "name": "The Separate Branches Rule",
+        "body": "Tech branches never borrow a cult color or amber; a lit link or node reads as knowledge, not as a cult.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "Bellefair names and counts; Jost instructs. Anything clickable or any label is Jost in spaced capitals; Bellefair is never uppercase-tracked, and Jost never sets a title or a counted total.",
+        "section": "typography"
+      },
+      {
+        "name": "The Light Weight Rule",
+        "body": "Bellefair stays at 400 and Jost reading text at 300. Weight 500 is reserved for button text, labels, costs and inline bold names.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Shadow Rule",
+        "body": "Nothing casts a shadow and nothing glows. Separation is a 1px hairline or a change of translucent fill. The one named exception is the floating-number text shadow above; no card, control or label may use it.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Hairline Rule",
+        "body": "Every edge is a 1px line at 22% or 55% plaster ink; selection changes the line's color (amber or a cult or branch light), not its weight. The only heavier rings are drawn marks: sigil strokes (1.2 to 1.5px) and the 1.5px ring of an available tech node.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "**Do** keep amber for the action being offered: one primary per menu view, and in play only the end-turn tile, the capture action and the learn button; every other action is a hairline button.",
+      "**Do** set counted numbers (oil, turn, scores, stats, damage) in Bellefair with tabular figures, in ink, and every control or label in Jost spaced capitals (0.2 to 0.28em).",
+      "**Do** draw every edge as a 1px hairline (22% or 55% plaster ink) and keep corners square; let circles appear only as sigils, the nav dot and tech nodes.",
+      "**Do** draw arrows, chevrons, ticks, icons, drops and sigils as thin strokes or masks in currentColor, a cult light or a branch light.",
+      "**Do** identify a cult with its light and a small square (8px owner swatch, 6px toast swatch, 3px pips), never with a colored surface.",
+      "**Do** keep the HUD in the four corners at 16px and leave the middle of the map open.",
+      "**Do** move on the shared ease cubic-bezier(0.16, 1, 0.3, 1): 0.3s for color, 0.45s for the nav dot and HUD rises, 0.6 to 0.8s for menu entrances, and honor reduced motion by removing all of it."
+    ],
+    "donts": [
+      "**Don't** use rounded, filled button stacks, gothic display faces, or glowing ornament; the user rejected all three.",
+      "**Don't** add box shadows or glows to any surface or control; the floating-number text shadow is the only exception and stays on world-space numbers.",
+      "**Don't** color oil totals, costs or other figures amber; only the drawn drop carries the lantern.",
+      "**Don't** let a tech branch or a status (tide, wound, health) reuse a cult color or amber.",
+      "**Don't** use amber or a cult color as decoration, section color or background fill beyond the documented 5 to 9% washes.",
+      "**Don't** type arrows or icons as text glyphs or icon fonts.",
+      "**Don't** place UI over the right third of the menu home view, where the island and lighthouse live."
+    ]
+  }
+}

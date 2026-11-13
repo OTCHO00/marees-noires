@@ -1,6 +1,7 @@
 // Point d'entrée : écran titre, création de la partie, entrées souris/tactile
 // et enchaînement des tours (joueur puis IA).
 import './style.css';
+import './ui/menu.css';
 import { Game } from './core/game.js';
 import { aiTurn } from './core/ai.js';
 import { FACTIONS } from './core/data.js';
@@ -21,10 +22,10 @@ const SIZES = [
 const setup = { faction: 0, rivals: 2, size: 18 };
 
 const MOTTOS = [
-  '« Tant qu’une flamme brûle, la mer n’a pas gagné. »',
-  '« Nous sommes nés de l’eau, nous y retournerons. »',
-  '« Ce qui dort sous les flots a soif. »',
-  '« Nous avons vu ce qui vient. Nous attendons. »',
+  '«\u00a0Tant qu’une flamme brûle, la mer n’a pas gagné.\u00a0»',
+  '«\u00a0Nous sommes nés de l’eau, nous y retournerons.\u00a0»',
+  '«\u00a0Ce qui dort sous les flots a soif.\u00a0»',
+  '«\u00a0Nous avons vu ce qui vient. Nous attendons.\u00a0»',
 ];
 
 // ---------- Écran titre ----------
@@ -34,9 +35,11 @@ function picker(el, items, isActive, onPick) {
     el.innerHTML = '';
     items.forEach((item) => {
       const b = document.createElement('button');
+      b.type = 'button';
       b.innerHTML = item.html;
       if (item.color) b.style.setProperty('--pick', item.color);
-      b.classList.toggle('active', isActive(item));
+      b.classList.toggle('on', isActive(item));
+      b.setAttribute('aria-pressed', isActive(item));
       b.onclick = () => {
         onPick(item);
         render();
@@ -49,17 +52,13 @@ function picker(el, items, isActive, onPick) {
 
 picker(
   $('#factionPicker'),
-  FACTIONS.map((f) => ({ id: f.id, color: f.color, html: `${sigil(f, 44)}${f.name}` })),
+  FACTIONS.map((f) => ({ id: f.id, color: f.color, html: `${sigil(f, 40, { line: true })}<span class="nm">${f.name}</span><span class="mt">${MOTTOS[f.id]}</span>` })),
   (i) => i.id === setup.faction,
-  (i) => {
-    setup.faction = i.id;
-    $('#factionGift').textContent = MOTTOS[i.id];
-  },
+  (i) => (setup.faction = i.id),
 );
-$('#factionGift').textContent = MOTTOS[setup.faction];
 picker(
   $('#rivalPicker'),
-  [1, 2, 3].map((n) => ({ n, html: `${n} culte${n > 1 ? 's' : ''}` })),
+  [1, 2, 3].map((n) => ({ n, html: String(n) })),
   (i) => i.n === setup.rivals,
   (i) => (setup.rivals = i.n),
 );
@@ -75,26 +74,46 @@ picker(
 // (eau.html) peut imposer un autre style : ?eau=huile, etc.
 const WATER = new URLSearchParams(location.search).get('eau') ?? undefined;
 const menu = createMenuScene($('#menuScene'), { water: WATER ?? 'abysse' });
-const showMenu = (id) => ['#menuMain', '#menuSetup', '#menuRulesPanel'].forEach((s) => $(s).classList.toggle('hidden', s !== id));
-$('#menuNew').onclick = () => {
-  $('#sandbox').checked = false;
+// Trois vues dans la même colonne ; la navigation latérale suit la vue
+// active, et son point glisse vers l'entrée survolée.
+const VIEWS = { home: '#menuMain', setup: '#menuSetup', rules: '#menuRulesPanel' };
+const navFor = { home: 'home', setup: null, rules: 'rules' };
+const dot = $('.mn-dot');
+const moveDot = (btn) => {
+  if (btn) dot.style.transform = `translateY(${btn.offsetTop + btn.offsetHeight / 2 - 3}px)`;
+};
+const navOn = () => $('.mn-nav button.on');
+function showMenu(view, nav = navFor[view]) {
+  Object.entries(VIEWS).forEach(([v, sel]) => $(sel).classList.toggle('hidden', v !== view));
+  $('#startScreen').dataset.view = view;
+  document.querySelectorAll('.mn-nav button').forEach((b) => b.classList.toggle('on', b.dataset.go === nav));
+  moveDot(navOn());
+}
+function openSetup(sandbox) {
+  $('#sandbox').checked = sandbox;
   $('#reveal').checked = false;
-  showMenu('#menuSetup');
-};
-$('#menuSandbox').onclick = () => {
-  $('#sandbox').checked = true;
-  showMenu('#menuSetup');
-};
-$('#menuRules').onclick = () => showMenu('#menuRulesPanel');
-document.querySelectorAll('[data-back]').forEach((b) => {
-  b.onclick = () => showMenu('#menuMain');
+  showMenu('setup', sandbox ? 'sandbox' : 'new');
+}
+$('#menuNew').onclick = () => openSetup(false);
+$('#menuSandbox').onclick = () => openSetup(true);
+document.querySelectorAll('.mn-nav button').forEach((b) => {
+  b.onclick = () => ({ home: () => showMenu('home'), new: () => openSetup(false), sandbox: () => openSetup(true), rules: () => showMenu('rules') })[b.dataset.go]();
+  b.onmouseenter = () => moveDot(b);
+  b.onfocus = () => moveDot(b);
 });
+$('.mn-nav').onmouseleave = () => moveDot(navOn());
+$('[data-rules]').onclick = () => showMenu('rules');
+document.querySelectorAll('[data-back]').forEach((b) => {
+  b.onclick = () => showMenu('home');
+});
+document.fonts.ready.then(() => moveDot(navOn()));
 const menuKeys = (e) => {
+  if (e.target.closest?.('button') && e.key === 'Enter') return; // le bouton focalisé agit seul
   if (e.key === 'Enter') {
     if (!$('#menuSetup').classList.contains('hidden')) $('#startBtn').click();
-    else showMenu('#menuSetup');
+    else openSetup(false);
   } else if (e.key === 'Escape') {
-    showMenu('#menuMain');
+    showMenu('home');
   }
 };
 window.addEventListener('keydown', menuKeys);
@@ -170,7 +189,7 @@ function showEnd(game, me) {
       : 'Ta dernière cité est tombée. La brume a tout recouvert.';
   $('#scoreTable').innerHTML = [...game.factions]
     .sort((a, b) => game.score(b.id) - game.score(a.id))
-    .map((f) => `<tr><td>${sigil(f, 26)}${f.name}${f.alive ? '' : ' · éteint'}</td><td>${game.score(f.id)}</td></tr>`)
+    .map((f) => `<tr><td>${sigil(f, 28, { line: true })}<span>${f.name}${f.alive ? '' : ' · éteint'}</span></td><td>${game.score(f.id)}</td></tr>`)
     .join('');
   $('#endScreen').classList.remove('hidden');
 }

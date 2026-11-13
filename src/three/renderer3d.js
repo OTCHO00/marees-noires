@@ -466,24 +466,24 @@ export class Renderer3D {
       const { attacker: a, defender: d } = e;
       if (e.ranged || this.game.stats(a).range > 1) this.shoot(a, d);
       this.shakes.set(d.id, now);
-      this.addFloat(d.x, d.y, `−${e.damage}`, '#F08A7C', e.ranged ? 360 : 0);
+      this.addFloat(d.x, d.y, `−${e.damage}`, '#e58c7a', e.ranged ? 360 : 0);
     } else if (e.type === 'heal') {
-      this.addFloat(e.unit.x, e.unit.y, `+${e.amount}`, '#B8EADB');
+      this.addFloat(e.unit.x, e.unit.y, `+${e.amount}`, '#8fc9a0');
     } else if (e.type === 'harvest') {
-      this.addFloat(e.x, e.y, '+1 fidèle', '#F5C26B');
+      this.addFloat(e.x, e.y, '+1 fidèle', '#e7e2d6');
       this.dirty.tiles = true;
     } else if (e.type === 'levelup') {
-      this.addFloat(e.city.x, e.city.y, `Niveau ${e.city.level}`, '#F5C26B');
+      this.addFloat(e.city.x, e.city.y, `Niveau ${e.city.level}`, '#e7e2d6');
       this.dirty.cities = this.dirty.borders = true;
     } else if (e.type === 'capture') {
-      this.addFloat(e.city.x, e.city.y, 'Le feu est allumé', '#F1E9D8');
+      this.addFloat(e.city.x, e.city.y, 'Le feu est allumé', '#e7e2d6');
       this.dirty.cities = this.dirty.borders = true;
     } else if (e.type === 'train') {
-      this.addFloat(e.city.x, e.city.y, 'Nouveau fidèle', '#F1E9D8');
+      this.addFloat(e.city.x, e.city.y, 'Nouveau fidèle', '#e7e2d6');
     } else if (e.type === 'upgrade') {
-      this.addFloat(e.unit.x, e.unit.y, 'Navire noir', '#F5C26B');
+      this.addFloat(e.unit.x, e.unit.y, 'Navire noir', '#e7e2d6');
     } else if (e.type === 'tide') {
-      for (const t of e.submerged) this.addFloat(t.x, t.y, 'Englouti', '#7FD1B9');
+      for (const t of e.submerged) this.addFloat(t.x, t.y, 'Englouti', '#9fc3c9');
       this.dirty.tiles = this.dirty.borders = true;
       this.recolorSea();
     } else if (e.type === 'eliminated') {

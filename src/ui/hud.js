@@ -25,8 +25,7 @@ export class Hud {
 
     const f = game.faction(humanId);
     document.documentElement.style.setProperty('--accent', f.color);
-    document.documentElement.style.setProperty('--accent-light', f.light);
-    $('#factionSigil').innerHTML = sigil(f, 34);
+    $('#factionSigil').innerHTML = sigil(f, 40, { line: true });
     $('#factionName').textContent = f.name;
     $('#hud').classList.remove('hidden');
     $('#registreTab').onclick = () => {
@@ -95,7 +94,7 @@ export class Hud {
       const g = this.game;
       const { damage, retaliation } = g.previewCombat(this.sel.unit, target);
       const kill = damage >= target.hp;
-      this.tooltip.innerHTML = `<small>${g.stats(this.sel.unit).name} → ${g.stats(target).name}</small>
+      this.tooltip.innerHTML = `<small>${g.stats(this.sel.unit).name} <svg class="arr" viewBox="0 0 26 12" width="18" height="9" aria-hidden="true"><path d="M0 6h24M19 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg> ${g.stats(target).name}</small>
         <span>Inflige <b class="hit">${damage}</b>${kill ? ' · <b class="hit">fatal</b>' : ` · Riposte <b>${retaliation}</b>`}</span>`;
       this.tooltip.style.left = `${sx}px`;
       this.tooltip.style.top = `${sy}px`;
@@ -147,7 +146,7 @@ export class Hud {
     $('#income').textContent = `+${g.income(this.me)} / tour`;
     $('#turn').textContent = g.turn;
     const n = g.tidesIn();
-    $('#tide').innerHTML = n <= 0 ? 'La marée <b>monte</b>' : `La marée monte dans <b>${n} tour${n > 1 ? 's' : ''}</b>`;
+    $('#tide').innerHTML = n <= 0 ? 'La marée <b>monte</b>' : `Marée dans <b>${n} tour${n > 1 ? 's' : ''}</b>`;
     $('#tideChip').classList.toggle('soon', n <= 1);
     // La jauge se remplit à mesure que la prochaine marée approche.
     const period = g.turn < RULES.firstTide ? RULES.firstTide - 1 : RULES.tideEvery;
@@ -173,7 +172,7 @@ export class Hud {
     else if (sel.kind === 'city') p.innerHTML = this.cityHtml(sel.city);
     else p.innerHTML = this.tileHtml(sel.x, sel.y);
     const owner = sel.unit?.owner ?? sel.city?.owner ?? this.game.tile(sel.x, sel.y)?.owner;
-    p.style.setProperty('--panel-accent', owner != null ? this.game.faction(owner).color : '#2C4A44');
+    p.style.setProperty('--panel-accent', owner != null ? this.game.faction(owner).color : 'rgba(231,226,214,0.38)');
     p.querySelectorAll('[data-action]').forEach((btn) => {
       btn.onclick = () => this.act(btn.dataset.action, btn.dataset.arg);
     });
@@ -266,7 +265,7 @@ export class Hud {
       const r = RESOURCES[t.resource];
       const err = this.myTurn ? g.harvestError(x, y) : 'Attends ton tour.';
       res = `<p><b>${r.name}</b> — +${r.pop} fidèle${r.pop > 1 ? 's' : ''}</p>
-        <div class="actions"><button class="btn btn-accent" data-action="harvest" ${err ? `disabled title="${err}"` : ''}>Récolter · ${r.cost} ${oil}</button></div>
+        <div class="actions"><button class="btn" data-action="harvest" ${err ? `disabled title="${err}"` : ''}>Récolter · ${r.cost} ${oil}</button></div>
         ${err ? `<p class="note">${err}</p>` : ''}`;
     }
     const sink = t.sink ? `<p class="note warn">Condamnée par la marée (stade ${t.sink} sur 3).</p>` : '';
@@ -354,7 +353,7 @@ export class Hud {
     const v = this.renderer.stage.view;
     const [vx, vy] = at(v.target.x, v.target.z);
     const k = v.zoom * s * 0.55;
-    ctx.strokeStyle = '#F1E9D8';
+    ctx.strokeStyle = '#e7e2d6';
     ctx.lineWidth = 1.2;
     ctx.strokeRect(vx - k * 1.6, vy - k * 0.8, k * 3.2, k * 1.6);
   }
@@ -415,8 +414,8 @@ export class Hud {
       const a = t.req ? pos(t.req) : { x: cx, y: cy };
       const b = pos(id);
       const lit = this.techState(id) === 'owned';
-      const color = lit ? BRANCHES[t.branch].color : 'rgba(255,255,255,0.12)';
-      return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${color}" stroke-width="${lit ? 5 : 3}" stroke-linecap="round"/>`;
+      const color = lit ? BRANCHES[t.branch].color : 'rgba(231,226,214,0.22)';
+      return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${color}" stroke-width="1.2"/>`;
     }).join('');
     const names = BRANCHES.map((br, i) => {
       const a = angle(i);
@@ -425,25 +424,20 @@ export class Hud {
     }).join('');
     const sky = $('#techSky');
     sky.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    // Cercles des paliers et anneau de runes autour du sceau.
-    const rings = RADII.slice(1).map((r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(127,209,185,0.07)" stroke-dasharray="2 7"/>`).join('');
-    const glyphs = 'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜ';
-    const runes = [...glyphs].map((c, i) => {
-      const a = (i / glyphs.length) * Math.PI * 2;
-      return `<text x="${cx + Math.cos(a) * 58}" y="${cy + Math.sin(a) * 58 + 4}" text-anchor="middle" font-size="12" fill="#7FD1B9" fill-opacity="0.55" transform="rotate(${(a * 180) / Math.PI + 90} ${cx + Math.cos(a) * 58} ${cy + Math.sin(a) * 58})">${c}</text>`;
-    }).join('');
-    sky.innerHTML = `${rings}${links}${names}<circle cx="${cx}" cy="${cy}" r="46" fill="#17302f" stroke="rgba(127,209,185,0.35)"/><circle cx="${cx}" cy="${cy}" r="70" fill="none" stroke="rgba(127,209,185,0.18)"/><g class="rune-ring">${runes}</g>`;
+    // Cercles des paliers, au trait, autour du sceau.
+    const rings = RADII.slice(1).map((r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(231,226,214,0.08)" stroke-dasharray="1 6"/>`).join('');
+    sky.innerHTML = `${rings}${links}${names}<circle cx="${cx}" cy="${cy}" r="46" fill="#03090b" stroke="rgba(231,226,214,0.55)"/>`;
 
     const me = g.faction(this.me);
-    $('#techStars').innerHTML = `<div style="position:absolute;left:${cx}px;top:${cy}px;transform:translate(-50%,-50%)">${sigil(me, 60)}</div>`
+    $('#techStars').innerHTML = `<div style="position:absolute;left:${cx}px;top:${cy}px;transform:translate(-50%,-50%)">${sigil(me, 60, { line: true })}</div>`
       + ids.map((id) => {
         const t = TECHS[id];
         const p = pos(id);
         const state = this.techState(id);
         const color = BRANCHES[t.branch].color;
-        const ink = state === 'owned' ? '#1b1306' : state === 'available' ? color : '#4f6563';
+        const ink = state === 'owned' ? '#03090b' : state === 'available' ? color : 'rgba(231,226,214,0.38)';
         return `<button class="node ${state}${id === this.techSel ? ' selected' : ''}" data-tech="${id}" style="left:${p.x}px;top:${p.y}px;--c:${color}" aria-label="${t.name}">
-            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="${ink}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="${ink}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span class="price">${g.techCost(this.me, id)}</span>
           </button><span class="node-label ${state}" style="left:${p.x}px;top:${p.y}px">${t.name}</span>`;
       }).join('');
@@ -466,10 +460,9 @@ export class Hud {
     const action = state === 'owned' ? 'Déjà appris' : `Apprendre · ${g.techCost(this.me, id)} ${oil}`;
     const card = $('#techCard');
     card.style.setProperty('--c', color);
-    card.innerHTML = `<div class="badge"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="#1b1306" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    card.innerHTML = `<div class="badge"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div>
-        <span class="meta">${BRANCHES[t.branch].name.toUpperCase()} · RANG ${t.tier}</span>
-        <h3>${t.name}</h3>
+        <h3>${t.name}<small class="meta">${BRANCHES[t.branch].name} · rang ${t.tier}</small></h3>
         <p>${t.desc}${t.lore ? `<em>« ${t.lore} »</em>` : ''}</p>
         ${t.req && state === 'locked' ? `<p class="note">Il faut d’abord apprendre ${TECHS[t.req].name}.</p>` : ''}
       </div>
@@ -487,7 +480,7 @@ export class Hud {
   toast(text, color) {
     const el = document.createElement('div');
     el.className = 'toast';
-    el.style.borderLeftColor = color ?? 'var(--accent)';
+    if (color) el.style.setProperty('--c', color);
     el.textContent = text;
     const box = $('#toasts');
     box.appendChild(el);
@@ -502,7 +495,7 @@ export class Hud {
       b.classList.add('hidden');
       return;
     }
-    b.innerHTML = `${sigil(faction, 26)}<span>${faction.name} agissent dans la brume…</span>`;
+    b.innerHTML = `${sigil(faction, 26, { line: true })}<span>${faction.name} agissent dans la brume…</span>`;
     b.classList.remove('hidden');
   }
 
@@ -521,7 +514,7 @@ export class Hud {
       this.toast(`${e.faction.name} ont disparu dans les flots.`, e.faction.color);
     } else if (e.type === 'tide') {
       const lost = e.submerged.filter((t) => seen(t.x, t.y)).length;
-      this.toast(lost ? `La marée monte : ${lost} terre${lost > 1 ? 's' : ''} englouties.` : 'La marée monte. De nouvelles côtes s’enfoncent.', '#7FD1B9');
+      this.toast(lost ? `La marée monte : ${lost} terre${lost > 1 ? 's' : ''} englouties.` : 'La marée monte. De nouvelles côtes s’enfoncent.', '#9fc3c9');
     } else if (e.type === 'death' && e.unit.owner === this.me) {
       if (this.sel?.unit === e.unit) this.select(null);
     }

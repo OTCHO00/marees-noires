@@ -47,12 +47,14 @@ export const RESOURCES = {
 
 // L'arbre compte 5 branches de 4 rangs ; chaque savoir exige le précédent
 // de sa branche. `branch` sert à l'affichage en constellations.
+// Les couleurs des branches ne reprennent ni celles des cultes ni l'ambre de
+// l'action : bleu acier, sable, brique, ivoire, lichen.
 export const BRANCHES = [
-  { name: 'La Mer', color: '#7FD1B9' },
+  { name: 'La Mer', color: '#6f9fb8' },
   { name: 'Les Récoltes', color: '#c9b98a' },
-  { name: 'La Guerre', color: '#D9604F' },
-  { name: 'La Lumière', color: '#F5C26B' },
-  { name: 'La Foi', color: '#A99BEF' },
+  { name: 'La Guerre', color: '#a8664a' },
+  { name: 'La Lumière', color: '#e2d3a3' },
+  { name: 'La Foi', color: '#93a77f' },
 ];
 
 export const TECHS = {

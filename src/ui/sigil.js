@@ -6,11 +6,23 @@ const MARKS = {
   eye: (c) => `<path d="M-12 0 Q0 -10 12 0 Q0 10 -12 0Z" fill="none" stroke="${c}" stroke-width="2"/><circle r="3.5" fill="${c}"/>`,
 };
 
-export function sigil(faction, size = 32) {
+export function sigil(faction, size = 32, { line = false } = {}) {
+  const c = faction.color;
+  if (line) {
+    // Version au trait fin pour le menu : ni disque teinté ni aplat.
+    const mark = MARKS[faction.sigil](c)
+      .replace(/fill="[^"]+"/g, `fill="none" stroke="${c}"`)
+      .replace(/stroke-width="[^"]+"/g, '')
+      .replace(/stroke="([^"]+)"( stroke="[^"]+")?/g, 'stroke="$1" stroke-width="1.5"');
+    return `<svg class="sigil" viewBox="-30 -30 60 60" width="${size}" height="${size}" aria-hidden="true">
+    <circle r="22" fill="none" stroke="${c}" stroke-width="1.2"/>
+    ${mark}
+  </svg>`;
+  }
   return `<svg class="sigil" viewBox="-30 -30 60 60" width="${size}" height="${size}" aria-hidden="true">
-    <circle r="27" fill="${faction.color}" opacity="0.12"/>
-    <circle r="20" fill="none" stroke="${faction.color}" stroke-width="2"/>
-    ${MARKS[faction.sigil](faction.color)}
+    <circle r="27" fill="${c}" opacity="0.12"/>
+    <circle r="20" fill="none" stroke="${c}" stroke-width="2"/>
+    ${MARKS[faction.sigil](c)}
   </svg>`;
 }
 

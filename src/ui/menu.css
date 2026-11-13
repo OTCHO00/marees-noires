@@ -1,0 +1,770 @@
+/* Menu de départ : la retenue d'une alcôve d'ikebana transposée dans la
+   nuit. L'île et son phare sont la branche ; l'interface est le vide qui
+   l'entoure : filets fins, capitales espacées, un seul bouton plein. */
+
+.mn,
+.mn-end {
+  --mn-ground: #03090b;
+  --mn-rail: rgba(10, 20, 22, 0.88);
+  --mn-ink: #e7e2d6;
+  --mn-ash: #b8b09f;
+  --mn-line: rgba(231, 226, 214, 0.22);
+  --mn-line-strong: rgba(231, 226, 214, 0.55);
+  --mn-amber: #e8a33d;
+  --mn-amber-hi: #f2b75c;
+  --mn-on-amber: #171007;
+  --mn-display: 'Bellefair', 'Times New Roman', serif;
+  --mn-sans: 'Jost', 'Helvetica Neue', Arial, sans-serif;
+  --mn-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--mn-sans);
+  font-weight: 400;
+  color: var(--mn-ink);
+}
+
+.mn ::selection,
+.mn-end ::selection {
+  background: var(--mn-amber);
+  color: var(--mn-on-amber);
+}
+
+.mn {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  background: var(--mn-ground);
+}
+
+#menuScene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Voile de lecture : léger sur l'accueil, plus dense quand un panneau s'ouvre. */
+.mn-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(3, 9, 11, 0.78) 0%, rgba(3, 9, 11, 0.5) 38%, rgba(3, 9, 11, 0) 62%);
+  transition: opacity 0.6s var(--mn-ease);
+}
+
+.mn-shade::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(3, 9, 11, 0.9) 0%, rgba(3, 9, 11, 0.82) 52%, rgba(3, 9, 11, 0.25) 78%);
+  opacity: 0;
+  transition: opacity 0.6s var(--mn-ease);
+}
+
+.mn:not([data-view='home']) .mn-shade::after {
+  opacity: 1;
+}
+
+/* ---------- Colonne latérale ---------- */
+
+.mn-rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 264px;
+  padding: 44px 36px 36px;
+  display: flex;
+  flex-direction: column;
+  background: var(--mn-rail);
+  border-right: 1px solid var(--mn-line);
+}
+
+.mn-logo {
+  color: var(--mn-ink);
+}
+
+.mn-logo svg {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--mn-ash);
+}
+
+.mn-name {
+  margin: 0;
+  font-family: var(--mn-display);
+  font-size: 17px;
+  line-height: 1.15;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mn-sub {
+  margin: 8px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--mn-ash);
+}
+
+.mn-nav {
+  position: relative;
+  margin-top: 88px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mn-nav button {
+  padding: 14px 0 14px 26px;
+  text-align: left;
+  font: 400 13px/1 var(--mn-sans);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--mn-ash);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.3s var(--mn-ease);
+}
+
+.mn-nav button:hover,
+.mn-nav button.on {
+  color: var(--mn-ink);
+}
+
+.mn-dot {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mn-ink);
+  transform: translateY(17px);
+  transition: transform 0.45s var(--mn-ease);
+}
+
+.mn-note {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--mn-line);
+}
+
+.mn-label {
+  margin: 0 0 10px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--mn-ash);
+}
+
+.mn-note-big {
+  margin: 0;
+  font-family: var(--mn-display);
+  font-size: 21px;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.mn-note-small {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--mn-ash);
+}
+
+.mn-version {
+  margin: 28px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--mn-ash);
+}
+
+/* Devise verticale au bord droit, soulignée d'un filet court. */
+.mn-motto {
+  position: absolute;
+  right: 44px;
+  top: 48px;
+  margin: 0;
+  writing-mode: vertical-rl;
+  font-size: 12px;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: rgba(231, 226, 214, 0.72);
+}
+
+.mn-motto::after {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 32px;
+  margin-top: 18px;
+  background: var(--mn-line-strong);
+}
+
+/* ---------- Scène centrale ---------- */
+
+.mn-stage {
+  position: absolute;
+  left: 264px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.mn-view {
+  position: absolute;
+  left: clamp(48px, 6.5vw, 120px);
+  animation: mn-in 0.7s var(--mn-ease) both;
+}
+
+@keyframes mn-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(10px);
+  }
+}
+
+.mn-home {
+  top: 50%;
+  transform: translateY(-54%);
+  width: min(520px, 38vw);
+  animation-name: mn-in-home;
+}
+
+@keyframes mn-in-home {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(-50%);
+  }
+}
+
+.mn-title {
+  margin: 0;
+  font-family: var(--mn-display);
+  font-weight: 400;
+  font-size: clamp(64px, 6.6vw, 96px);
+  line-height: 1;
+  letter-spacing: 0.005em;
+  animation: mn-settle 1.6s var(--mn-ease) both;
+}
+
+/* Le titre se pose : l'interlettrage se resserre en entrant. */
+@keyframes mn-settle {
+  from {
+    letter-spacing: 0.12em;
+    opacity: 0;
+  }
+}
+
+.mn-lede {
+  margin: 30px 0 0;
+  max-width: 27em;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  color: var(--mn-ink);
+}
+
+.mn-actions {
+  margin-top: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Boutons : rectangles nets à filet, un seul plein. */
+.mn-btn {
+  height: 58px;
+  padding: 0 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  font: 500 13px/1 var(--mn-sans);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 0.3s var(--mn-ease), color 0.3s var(--mn-ease), border-color 0.3s var(--mn-ease);
+}
+
+.mn-btn.primary {
+  color: var(--mn-on-amber);
+  background: var(--mn-amber);
+  border: 1px solid var(--mn-amber);
+}
+
+.mn-btn.primary:hover {
+  background: var(--mn-amber-hi);
+  border-color: var(--mn-amber-hi);
+}
+
+.mn-btn.ghost {
+  color: var(--mn-ink);
+  background: rgba(3, 9, 11, 0.35);
+  border: 1px solid var(--mn-line-strong);
+}
+
+.mn-btn.ghost:hover {
+  border-color: var(--mn-ink);
+  background: rgba(231, 226, 214, 0.06);
+}
+
+.mn-btn:active {
+  transform: translateY(1px);
+}
+
+.mn-arrow {
+  flex: none;
+  transition: transform 0.35s var(--mn-ease);
+}
+
+.mn-btn:hover .mn-arrow {
+  transform: translateX(5px);
+}
+
+.mn-btn:hover .mn-arrow.back {
+  transform: translateX(-5px);
+}
+
+.mn button:focus-visible,
+.mn-end button:focus-visible,
+.mn-check input:focus-visible + .box {
+  outline: 1px solid var(--mn-ink);
+  outline-offset: 4px;
+}
+
+/* Lien vers les règles : seulement quand la colonne latérale est repliée. */
+.mn-link {
+  display: none;
+  padding: 10px 0;
+  font: 400 12px/1 var(--mn-sans);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--mn-ash);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--mn-line-strong);
+  text-underline-offset: 6px;
+  cursor: pointer;
+}
+
+/* ---------- Panneaux : nouvelle partie, règles ---------- */
+
+.mn-panel {
+  top: 0;
+  bottom: 0;
+  /* Le panneau s'arrête avant l'île : rien ne se pose sur le phare. */
+  width: min(600px, calc(66vw - 264px - clamp(48px, 6.5vw, 120px)));
+  padding: clamp(32px, 6.5vh, 72px) 0 40px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mn-line-strong) transparent;
+}
+
+.mn-h {
+  margin: 0;
+  font-family: var(--mn-display);
+  font-weight: 400;
+  font-size: clamp(44px, 4.2vw, 60px);
+  line-height: 1.05;
+}
+
+/* Un filet court sous les titres, comme sous le logotype. */
+.mn-h::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 1px;
+  margin-top: 22px;
+  background: var(--mn-line-strong);
+}
+
+.mn-intro {
+  margin: 14px 0 0;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--mn-ash);
+}
+
+.mn-field {
+  margin: 28px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.mn-field .mn-label {
+  float: left;
+  width: 100%;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--mn-line);
+}
+
+.mn-field .mn-label + * {
+  clear: both;
+}
+
+/* Cultes : quatre cartes à filet, le culte choisi prend sa couleur. */
+.mn-cults {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.mn-cults button {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 16px;
+  row-gap: 4px;
+  align-items: center;
+  padding: 16px 18px;
+  text-align: left;
+  color: var(--mn-ink);
+  background: rgba(7, 15, 17, 0.7);
+  border: 1px solid var(--mn-line);
+  cursor: pointer;
+  transition: border-color 0.3s var(--mn-ease), background 0.3s var(--mn-ease);
+}
+
+.mn-cults button .sigil {
+  grid-row: 1 / 3;
+}
+
+.mn-cults .nm {
+  font-family: var(--mn-display);
+  font-size: 21px;
+  line-height: 1.15;
+}
+
+.mn-cults .mt {
+  text-wrap: pretty;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--mn-ash);
+}
+
+.mn-cults button:hover {
+  border-color: var(--mn-line-strong);
+}
+
+.mn-cults button.on {
+  border-color: var(--pick);
+  background: color-mix(in srgb, var(--pick) 9%, rgba(7, 15, 17, 0.8));
+}
+
+.mn-pair {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 32px;
+}
+
+/* Choix segmentés : une rangée de cases à filet. */
+.mn-seg {
+  display: flex;
+}
+
+.mn-seg button {
+  flex: 1;
+  height: 48px;
+  font: 400 13px/1 var(--mn-sans);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mn-ash);
+  background: rgba(7, 15, 17, 0.7);
+  border: 1px solid var(--mn-line);
+  cursor: pointer;
+  transition: color 0.3s var(--mn-ease), border-color 0.3s var(--mn-ease), background 0.3s var(--mn-ease);
+}
+
+.mn-seg button + button {
+  margin-left: -1px;
+}
+
+.mn-seg button:hover {
+  color: var(--mn-ink);
+}
+
+.mn-seg button.on {
+  position: relative;
+  z-index: 1;
+  color: var(--mn-amber);
+  background: rgba(232, 163, 61, 0.08);
+  border-color: var(--mn-amber);
+}
+
+/* Cases à cocher redessinées : un carré à filet, plein d'ambre une fois coché. */
+.mn-check {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 40px;
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--mn-ash);
+  cursor: pointer;
+}
+
+.mn-check b {
+  margin-right: 8px;
+  font-weight: 500;
+  color: var(--mn-ink);
+}
+
+.mn-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mn-check .box {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--mn-line-strong);
+  transition: background 0.25s var(--mn-ease), border-color 0.25s var(--mn-ease);
+}
+
+.mn-check input:checked + .box {
+  background: var(--mn-amber) no-repeat center / 12px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.5l2.6 2.5L10 3.5' fill='none' stroke='%23171007' stroke-width='1.6'/%3E%3C/svg%3E");
+  border-color: var(--mn-amber);
+}
+
+.mn-panel .mn-actions {
+  margin-top: 32px;
+}
+
+/* Règles : un intitulé en capitales, une phrase. */
+.mn-rules {
+  margin: 36px 0 0;
+  display: grid;
+  grid-template-columns: 150px 1fr;
+}
+
+.mn-rules dt,
+.mn-rules dd {
+  margin: 0;
+  padding: 16px 0;
+  border-top: 1px solid var(--mn-line);
+}
+
+.mn-rules dt {
+  padding-top: 19px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--mn-ash);
+}
+
+.mn-rules dd {
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.mn-keys {
+  margin: 28px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+  gap: 12px 28px;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--mn-ash);
+}
+
+.mn-keys span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mn-keys kbd {
+  padding: 4px 8px;
+  font: 400 11px/1 var(--mn-sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mn-ink);
+  border: 1px solid var(--mn-line-strong);
+}
+
+/* ---------- Écran de fin ---------- */
+
+.mn-end {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 9, 11, 0.86);
+  animation: mn-in 0.8s var(--mn-ease) both;
+}
+
+.mn-end-card {
+  width: min(520px, 100%);
+  padding: 48px 44px 44px;
+  background: var(--mn-rail);
+  border: 1px solid var(--mn-line);
+}
+
+.mn-scores {
+  width: 100%;
+  margin: 32px 0 36px;
+  border-collapse: collapse;
+}
+
+.mn-scores td {
+  padding: 12px 0;
+  border-top: 1px solid var(--mn-line);
+  font-size: 15px;
+}
+
+.mn-scores td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mn-scores td:last-child {
+  text-align: right;
+  font-family: var(--mn-display);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Écrans plus petits ---------- */
+
+@media (max-height: 760px) {
+  .mn-nav {
+    margin-top: 48px;
+  }
+
+  .mn-actions {
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 980px) {
+  .mn-rail {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: auto;
+    padding: 18px 20px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-right: 0;
+    border-bottom: 1px solid var(--mn-line);
+  }
+
+  .mn-name {
+    font-family: var(--mn-sans);
+    font-size: 12px;
+    letter-spacing: 0.3em;
+  }
+
+  .mn-logo svg,
+  .mn-sub,
+  .mn-note,
+  .mn-motto,
+  .mn-nav {
+    display: none;
+  }
+
+  .mn-stage {
+    left: 0;
+    top: 64px;
+  }
+
+  .mn-view {
+    left: 20px;
+    right: 20px;
+  }
+
+  .mn-home {
+    top: auto;
+    bottom: 32px;
+    transform: none;
+    width: auto;
+    animation-name: mn-in;
+  }
+
+  .mn-title {
+    font-size: 54px;
+  }
+
+  .mn-lede {
+    margin-top: 18px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .mn-keys {
+    grid-template-columns: repeat(2, auto);
+  }
+
+  .mn-actions {
+    margin-top: 28px;
+  }
+
+  .mn-link {
+    display: block;
+  }
+
+  .mn-btn {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    padding: 0 20px;
+  }
+
+  .mn-panel {
+    width: auto;
+    padding-top: 28px;
+  }
+
+  .mn-cults,
+  .mn-pair {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .mn-pair {
+    gap: 0;
+  }
+
+  .mn-rules {
+    grid-template-columns: 1fr;
+  }
+
+  .mn-rules dd {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .mn-shade {
+    background: linear-gradient(0deg, rgba(3, 9, 11, 0.88) 0%, rgba(3, 9, 11, 0.5) 45%, rgba(3, 9, 11, 0) 70%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mn *,
+  .mn-end,
+  .mn-end * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

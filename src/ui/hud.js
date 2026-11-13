@@ -2,8 +2,12 @@
 import { UNITS, TECHS, RESOURCES, VESSELS, BRANCHES, RULES } from '../core/data.js';
 import { TECH_ICONS } from './techIcons.js';
 import { sigil, oil } from './sigil.js';
+import { portrait, warm, Vitrine } from '../three/portraits.js';
 
 const $ = (sel) => document.querySelector(sel);
+
+// Côté des vignettes de recrutement et de la fiche des savoirs (px CSS).
+const THUMB = 56;
 
 const TERRAIN_NAMES = {
   deep: ['Abysses', 'Des eaux noires et sans fond.'],
@@ -22,8 +26,11 @@ export class Hud {
     this.locked = false;
     this.panel = $('#panel');
     this.tooltip = $('#tooltip');
+    this.vitrine = new Vitrine();
 
     const f = game.faction(humanId);
+    // Les vignettes de recrutement sont prêtes avant la première cité.
+    warm(Object.keys(UNITS).map((type) => this.unitSubject(type)), THUMB);
     document.documentElement.style.setProperty('--accent', f.color);
     $('#factionSigil').innerHTML = sigil(f, 40, { line: true });
     $('#factionName').textContent = f.name;
@@ -165,17 +172,71 @@ export class Hud {
     const p = this.panel;
     if (!sel) {
       p.classList.add('hidden');
+      this.vitrine.stop();
       return;
     }
     p.classList.remove('hidden');
     if (sel.kind === 'unit') p.innerHTML = this.unitHtml(sel.unit);
     else if (sel.kind === 'city') p.innerHTML = this.cityHtml(sel.city);
     else p.innerHTML = this.tileHtml(sel.x, sel.y);
+    // La vitrine 3D garde son modèle d'une mise à jour à l'autre.
+    const slot = p.querySelector('.vitrine');
+    if (slot && this.vitrine.show(this.subjectOf(sel))) slot.appendChild(this.vitrine.el);
+    else {
+      slot?.remove();
+      this.vitrine.stop();
+    }
     const owner = sel.unit?.owner ?? sel.city?.owner ?? this.game.tile(sel.x, sel.y)?.owner;
     p.style.setProperty('--panel-accent', owner != null ? this.game.faction(owner).color : 'rgba(231,226,214,0.38)');
     p.querySelectorAll('[data-action]').forEach((btn) => {
       btn.onclick = () => this.act(btn.dataset.action, btn.dataset.arg);
     });
+  }
+
+  // ---------- Modèles 3D montrés dans l'interface ----------
+
+  unitSubject(type, owner = this.me) {
+    return { kind: 'unit', type, color: this.game.faction(owner).color };
+  }
+
+  subjectOf(sel) {
+    const g = this.game;
+    if (sel.kind === 'unit') {
+      const u = sel.unit;
+      const color = g.faction(u.owner).color;
+      return u.vessel
+        ? { kind: 'vessel', type: u.vessel, color, seed: u.id }
+        : { kind: 'unit', type: u.type, color, seed: u.id };
+    }
+    if (sel.kind === 'city') {
+      const c = sel.city;
+      if (c.owner == null) return { kind: 'sanctuary', seed: c.id };
+      const f = g.faction(c.owner);
+      return { kind: 'city', level: c.level, capital: c.capital, color: f.color, light: f.light, seed: c.id };
+    }
+    // Même graine que sur le plateau : la case est identique à celle de la carte.
+    const t = g.tile(sel.x, sel.y);
+    if (t.terrain !== 'land' && !t.resource) return null;
+    return {
+      kind: 'tile',
+      tile: { terrain: t.terrain, feature: t.feature, resource: t.resource, sink: t.sink || 0, city: null },
+      seed: (sel.y * g.size + sel.x) * 7 + 3,
+    };
+  }
+
+  // Ce qu'un savoir permet d'obtenir, avec son modèle.
+  unlocksOf(id) {
+    const color = this.game.faction(this.me).color;
+    const out = [];
+    for (const [type, d] of Object.entries(UNITS)) if (d.tech === id) out.push({ name: d.name, subject: this.unitSubject(type) });
+    if (id === 'navigation') out.push({ name: VESSELS.barque.name, subject: { kind: 'vessel', type: 'barque', color } });
+    if (id === 'navires' || id === 'leviathan') out.push({ name: VESSELS.navire.name, subject: { kind: 'vessel', type: 'navire', color } });
+    for (const [res, r] of Object.entries(RESOURCES)) {
+      if (r.tech !== id) continue;
+      const tile = { terrain: res === 'nacre' ? 'shallow' : 'land', feature: null, resource: res, sink: 0, city: null };
+      out.push({ name: r.name, subject: { kind: 'tile', tile, seed: 21 } });
+    }
+    return out;
   }
 
   ownerLine(fid) {
@@ -212,6 +273,7 @@ export class Hud {
       ? '<p class="note">Reste ici jusqu’au prochain tour pour allumer le feu du culte.</p>' : '';
     const sinking = g.tile(u.x, u.y).sink ? '<p class="note warn">Cette terre s’enfonce dans la mer.</p>' : '';
     return `
+      <div class="vitrine"></div>
       <h2>${title}</h2>
       ${this.ownerLine(u.owner)}
       <div class="hpbar"><div style="width:${(u.hp / s.maxHp) * 100}%"></div></div>
@@ -229,7 +291,7 @@ export class Hud {
   cityHtml(city) {
     const g = this.game;
     if (city.owner == null) {
-      return `<h2>Sanctuaire</h2>${this.ownerLine(null)}
+      return `<div class="vitrine"></div><h2>Sanctuaire</h2>${this.ownerLine(null)}
         <p class="flavor">Un cierge éteint sous une voûte de pierre. Amène un fidèle ici et reste un tour pour y allumer le feu de ton culte.</p>`;
     }
     const mine = city.owner === this.me;
@@ -240,14 +302,19 @@ export class Hud {
       for (const [type, def] of Object.entries(UNITS)) {
         const err = this.myTurn ? g.trainError(city, type) : 'Attends ton tour.';
         const locked = def.tech && !g.hasTech(this.me, def.tech);
-        recruits += `<button class="recruit" data-action="train" data-arg="${type}" ${err ? `disabled title="${err}"` : ''}>
-          <span class="name">${def.name}<span class="cost">${def.cost}${oil}</span></span>
-          <span class="mini">${locked ? `Nécessite ${TECHS[def.tech].name}` : `Att ${def.atk} · Déf ${def.def} · Mvt ${def.move} · Portée ${def.range}`}</span>
+        recruits += `<button class="recruit${locked ? ' locked' : ''}" data-action="train" data-arg="${type}" ${err ? `disabled title="${err}"` : ''}>
+          <img class="thumb" src="${portrait(this.unitSubject(type), THUMB)}" width="${THUMB}" height="${THUMB}" alt="">
+          <span class="body">
+            <span class="name">${def.name}</span>
+            <span class="mini">${locked ? `Nécessite ${TECHS[def.tech].name}` : `Att ${def.atk} · Déf ${def.def} · Mvt ${def.move} · Portée ${def.range}`}</span>
+          </span>
+          <span class="cost">${def.cost}${oil}</span>
         </button>`;
       }
       recruits += `</div><p class="note">Fidèles rattachés : ${g.unitCount(city)} / ${city.level + 1}</p>`;
     }
     return `
+      <div class="vitrine"></div>
       <h2>${city.name}${city.capital ? '<small>Capitale</small>' : ''}</h2>
       ${this.ownerLine(city.owner)}
       <p>Niveau <b>${city.level}</b> · produit <b>${city.level + (city.capital ? 1 : 0)}</b> ${oil} par tour</p>
@@ -269,7 +336,7 @@ export class Hud {
         ${err ? `<p class="note">${err}</p>` : ''}`;
     }
     const sink = t.sink ? `<p class="note warn">Condamnée par la marée (stade ${t.sink} sur 3).</p>` : '';
-    return `<h2>${name}</h2>${t.owner != null ? this.ownerLine(t.owner) : ''}<p class="flavor">${desc}</p>${sink}${res}`;
+    return `<div class="vitrine"></div><h2>${name}</h2>${t.owner != null ? this.ownerLine(t.owner) : ''}<p class="flavor">${desc}</p>${sink}${res}`;
   }
 
   act(action, arg) {
@@ -458,6 +525,10 @@ export class Hud {
     const err = state === 'owned' ? null : g.researchError(this.me, id);
     const can = this.myTurn && !err;
     const action = state === 'owned' ? 'Déjà appris' : `Apprendre · ${g.techCost(this.me, id)} ${oil}`;
+    const unlocks = this.unlocksOf(id).map((u) => `<figure>
+        <img src="${portrait(u.subject, THUMB)}" width="${THUMB}" height="${THUMB}" alt="">
+        <figcaption>${u.name}</figcaption>
+      </figure>`).join('');
     const card = $('#techCard');
     card.style.setProperty('--c', color);
     card.innerHTML = `<div class="badge"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="${TECH_ICONS[id]}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -466,6 +537,7 @@ export class Hud {
         <p>${t.desc}${t.lore ? `<em>« ${t.lore} »</em>` : ''}</p>
         ${t.req && state === 'locked' ? `<p class="note">Il faut d’abord apprendre ${TECHS[t.req].name}.</p>` : ''}
       </div>
+      ${unlocks ? `<div class="unlocks"><small>Débloque</small>${unlocks}</div>` : ''}
       <button class="btn ${can ? 'btn-accent' : ''}" id="techLearn" ${can ? '' : `disabled title="${err ?? 'Attends ton tour.'}"`}>${action}</button>`;
     $('#techLearn').onclick = () => {
       if (g.research(id)) {

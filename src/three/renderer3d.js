@@ -16,6 +16,39 @@ const LIGHT_POOL = 14; // nombre fixe de lumières : évite de recompiler les sh
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const ELEV = (35.264 * Math.PI) / 180;
 
+// Modèle d’une case (terre, décor, ressource), avant fusion. Sert au plateau
+// et aux vignettes de l’interface ; `null` pour l’eau sans ressource.
+export function tileModel(t, seed) {
+  const root = new THREE.Group();
+  if (t.terrain === 'land') {
+    root.add(M.landBlock(seed, { sink: t.sink || 0 }));
+    const top = -0.14 * (t.sink || 0);
+    const deco = new THREE.Group();
+    deco.position.y = top;
+    if (t.city == null && t.feature === 'mangrove') deco.add(M.mangrove(seed));
+    if (t.city == null && t.feature === 'falaise') deco.add(M.falaise(seed));
+    if (t.resource === 'relique') deco.add(M.relique());
+    if (t.resource === 'epave') deco.add(M.epave(seed));
+    if (!t.feature && !t.resource && t.city == null && !t.sink) {
+      const prop = B.landProp(seed);
+      if (prop) deco.add(prop);
+    }
+    if (t.sink >= 2) {
+      for (const [dx, dz, h] of [[-0.2, 0.1, 0.34], [0.18, -0.15, 0.22]]) {
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, h, 6), M.mat('#3b403c'));
+        col.position.set(dx, M.LAND_TOP + h / 2, dz);
+        deco.add(col);
+      }
+    }
+    root.add(deco);
+  } else if (t.resource === 'nacre') {
+    root.add(M.nacre(seed));
+  } else {
+    return null;
+  }
+  return root;
+}
+
 export class Renderer3D {
   constructor(canvas, game, viewerId, { water } = {}) {
     this.canvas = canvas;
@@ -216,34 +249,8 @@ export class Renderer3D {
   }
 
   buildTile(t, i) {
-    const root = new THREE.Group();
-    const seed = i * 7 + 3;
-    if (t.terrain === 'land') {
-      root.add(M.landBlock(seed, { sink: t.sink || 0 }));
-      const top = -0.14 * (t.sink || 0);
-      const deco = new THREE.Group();
-      deco.position.y = top;
-      if (t.city == null && t.feature === 'mangrove') deco.add(M.mangrove(seed));
-      if (t.city == null && t.feature === 'falaise') deco.add(M.falaise(seed));
-      if (t.resource === 'relique') deco.add(M.relique());
-      if (t.resource === 'epave') deco.add(M.epave(seed));
-      if (!t.feature && !t.resource && t.city == null && !t.sink) {
-        const prop = B.landProp(seed);
-        if (prop) deco.add(prop);
-      }
-      if (t.sink >= 2) {
-        for (const [dx, dz, h] of [[-0.2, 0.1, 0.34], [0.18, -0.15, 0.22]]) {
-          const col = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, h, 6), M.mat('#3b403c'));
-          col.position.set(dx, M.LAND_TOP + h / 2, dz);
-          deco.add(col);
-        }
-      }
-      root.add(deco);
-    } else if (t.resource === 'nacre') {
-      root.add(M.nacre(seed));
-    } else {
-      return null;
-    }
+    const root = tileModel(t, i * 7 + 3);
+    if (!root) return null;
     const baked = M.bake(root);
     baked.position.set(t.x, 0, t.y);
     return baked;

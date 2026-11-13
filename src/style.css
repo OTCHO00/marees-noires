@@ -626,19 +626,40 @@ b {
   margin-top: 14px;
 }
 
+/* Vitrine : le modèle 3D de la sélection, vivant, en tête du panneau. */
+.vitrine {
+  height: 136px;
+  margin: -20px -22px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #060c0d;
+}
+
+@media (max-height: 760px) {
+  .vitrine {
+    height: 108px;
+  }
+}
+
+.vitrine-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Recrutement : une ligne par fidèle, son portrait, ses forces, son prix. */
 .recruits {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-top: 12px;
 }
 
 .recruit {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-height: 58px;
-  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 14px 6px 6px;
   text-align: left;
   font-family: var(--font);
   color: var(--text);
@@ -662,6 +683,20 @@ b {
   border-color: rgba(231, 226, 214, 0.1);
 }
 
+.recruit .thumb {
+  display: block;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--line);
+  transition: filter 0.3s var(--ease), opacity 0.3s var(--ease);
+}
+
+/* Fidèle encore inconnu : sa silhouette reste dans la brume. */
+.recruit.locked .thumb {
+  filter: grayscale(0.9) brightness(0.8);
+  opacity: 0.8;
+}
+
 .recruit:disabled .name {
   color: var(--faint);
 }
@@ -670,21 +705,25 @@ b {
   opacity: 0.4;
 }
 
-.recruit .name {
+.recruit .body {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.recruit .name {
   font-family: var(--display);
-  font-size: 17px;
+  font-size: 18px;
+  line-height: 1.15;
 }
 
 .recruit .cost {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-family: var(--font);
-  font-size: 13px;
-  font-weight: 500;
+  font-family: var(--display);
+  font-size: 20px;
   color: var(--text);
 }
 
@@ -1043,6 +1082,41 @@ b {
   color: var(--muted);
 }
 
+.techsky-card .unlocks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.techsky-card .unlocks small {
+  flex-basis: 100%;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.techsky-card figure {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.techsky-card figure img {
+  display: block;
+  border: 1px solid var(--line);
+}
+
+.techsky-card figcaption {
+  font-family: var(--display);
+  font-size: 18px;
+}
+
 .techsky-card .btn {
   height: 50px;
 }
@@ -1199,6 +1273,10 @@ b {
     bottom: 120px;
     width: auto;
     max-height: 40vh;
+  }
+
+  .vitrine {
+    height: 92px;
   }
 
   #toasts {

@@ -340,7 +340,7 @@ export function createMenuScene(canvas, { water } = {}) {
     vertexShader: `varying vec2 vUv; varying vec3 vN; varying vec3 vV;
       void main() { vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `uniform vec3 uColor; uniform float uOpacity; varying vec2 vUv; varying vec3 vN; varying vec3 vV;
-      void main() { float a = pow(vUv.y, 0.9) * uOpacity * pow(abs(dot(vN, vV)), 1.1); gl_FragColor = vec4(uColor * a, a);
+      void main() { float a = pow(clamp(vUv.y, 0.0, 1.0), 0.9) * uOpacity * pow(min(abs(dot(vN, vV)), 1.0), 1.1); gl_FragColor = vec4(uColor * a, a);
       #include <colorspace_fragment>
       }`,
   });
@@ -362,11 +362,13 @@ export function createMenuScene(canvas, { water } = {}) {
 
   // Une barque qui traverse la baie.
   const boat = M.bake(U.vessel('barque', AMBER, 4));
-  for (const e of boat.userData.emitters) {
+  const boatLights = boat.userData.emitters.map((e) => {
     const l = new THREE.PointLight(e.color, e.intensity * 1.4, e.distance * 1.5, 1.8);
     l.position.copy(e.local);
+    l.userData.base = l.intensity;
     boat.add(l);
-  }
+    return l;
+  });
   boat.scale.setScalar(1.6);
   scene.add(boat);
 
@@ -457,6 +459,10 @@ export function createMenuScene(canvas, { water } = {}) {
     boat.position.set(-2 + p * 26, M.WATER_LEVEL - 0.02 + Math.sin(t * 1.3) * 0.03, 17.5 - Math.sin(p * Math.PI) * 2);
     boat.rotation.y = 0.12 * Math.sin(p * Math.PI * 2);
     boat.rotation.z = Math.sin(t * 1.1) * 0.05;
+    // La lanterne s'allume et s'éteint aux deux bouts de la traversée : la
+    // barque repart du début sans que sa lumière saute d'un coup.
+    const glow = Math.min(1, Math.sin(p * Math.PI) * 5);
+    for (const l of boatLights) l.intensity = l.userData.base * glow;
     U.animateParts(boat, t);
     for (const m of mists) m.material.uniforms.uTime.value = t;
     starField.material.opacity = 0.65 + Math.sin(t * 0.7) * 0.08;

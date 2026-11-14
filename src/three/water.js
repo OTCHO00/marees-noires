@@ -60,6 +60,8 @@ float fbm(vec2 p) {
   for (int i = 0; i < 4; i++) { v += a * noise(p); p = p * 2.03 + 17.1; a *= 0.5; }
   return v;
 }
+// Toute base de pow() est bornée à [0, 1] : une base négative d'un rien donne
+// un pixel NaN, que le halo (bloom) étale en tache noire le temps d'une image.
 // Trait net et anticrénelé autour de la valeur 0.
 float stroke(float d, float w) {
   float aa = fwidth(d) * 1.2;
@@ -108,7 +110,7 @@ void main() {
   vec3 col = mix(ink, murk, f.r * 0.8 + (1.0 - smoothstep(0.0, 1.2, dist)) * 0.4);
 
   // Ciel nocturne en reflet, plus présent en incidence rasante.
-  float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+  float fres = pow(clamp(1.0 - dot(N, V), 0.0, 1.0), 3.0);
   col = mix(col, vec3(0.006, 0.012, 0.014), fres);
 
   // Lune : un lustre large et doux qui glisse sur les bosses de la houle.
@@ -160,7 +162,7 @@ void main() {
 
   // Lignes d'eau de carte marine : elles naissent à la côte et s'en éloignent
   // en s'espaçant, de plus en plus fines.
-  float u = pow(dist / ${FAR.toFixed(1)}, 0.6) * 5.0 - uTime * 0.1;
+  float u = pow(max(dist / ${FAR.toFixed(1)}, 0.0), 0.6) * 5.0 - uTime * 0.1;
   u += (noise(vXZ * 1.3) - 0.5) * 0.25;
   float k = fract(u) - 0.5;
   float fade = 1.0 - smoothstep(0.35, 1.0, dist / ${FAR.toFixed(1)});
@@ -198,7 +200,7 @@ const abysse = /* glsl */ `
 float caustic(vec2 p) {
   vec2 w = p + vec2(fbm(p * 0.8 + uTime * 0.12), fbm(p * 0.8 - uTime * 0.1)) * 1.4;
   float n = fbm(w * 1.6);
-  return pow(1.0 - abs(sin(n * 18.0)), 10.0);
+  return pow(clamp(1.0 - abs(sin(n * 18.0)), 0.0, 1.0), 10.0);
 }
 void main() {
   vec4 f = fieldAt(vXZ);
@@ -230,7 +232,7 @@ void main() {
   // Surface : reflet du ciel en incidence rasante et étincelles de lune.
   vec2 g = vec2(fbm(vXZ * 2.5 + uTime * 0.2), fbm(vXZ * 2.5 - uTime * 0.17 + 3.0)) - 0.5;
   vec3 N = normalize(vec3(g.x * 0.5, 1.0, g.y * 0.5));
-  float fres = pow(1.0 - max(dot(N, V), 0.0), 4.0);
+  float fres = pow(clamp(1.0 - dot(N, V), 0.0, 1.0), 4.0);
   col = mix(col, vec3(0.01, 0.02, 0.024), fres * 0.7);
   col += vec3(0.5, 0.65, 0.62) * pow(max(dot(reflect(-V, N), normalize(uMoon)), 0.0), 400.0) * 0.25;
   col += lanterns(vXZ, 0.9) * 0.08;
@@ -240,7 +242,7 @@ void main() {
   vec2 c = floor(q);
   vec2 o = vec2(hash(c), hash(c + 5.3));
   float d = length(fract(q) - o);
-  float pulse = pow(0.5 + 0.5 * sin(uTime * (0.6 + hash(c + 2.0)) + hash(c) * 30.0), 6.0);
+  float pulse = pow(clamp(0.5 + 0.5 * sin(uTime * (0.6 + hash(c + 2.0)) + hash(c) * 30.0), 0.0, 1.0), 6.0);
   float alive = step(0.82, hash(c + 9.1)) * smoothstep(0.07, 0.0, d) * pulse;
   col += vec3(0.25, 0.8, 0.65) * alive * (0.5 + (1.0 - smoothstep(0.0, 2.0, dist)) * 1.0);
 
